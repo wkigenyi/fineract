@@ -41,7 +41,7 @@ public class ApplyAddtionalSharesCommandHandler implements NewCommandSourceHandl
     @Transactional
     @Override
     public CommandProcessingResult processCommand(JsonCommand jsonCommand) {
-        return this.shareAccountWritePlatformService.applyAddtionalShares(jsonCommand.entityId(), jsonCommand);
+        return this.shareAccountWritePlatformService.applyAdditionalShares(jsonCommand.entityId(), jsonCommand);
     }
 
 }

@@ -197,10 +197,10 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     }
 
     @Override
-    public CommandProcessingResult applyAddtionalShares(final Long accountId, JsonCommand jsonCommand) {
+    public CommandProcessingResult applyAdditionalShares(final Long accountId, JsonCommand jsonCommand) {
         try {
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
-            Map<String, Object> changes = this.accountDataSerializer.validateAndApplyAddtionalShares(jsonCommand, account);
+            Map<String, Object> changes = this.accountDataSerializer.validateAndApplyAdditionalShares(jsonCommand, account);
             ShareAccountTransaction transaction = null;
             if (!changes.isEmpty()) {
                 this.shareAccountRepository.saveAndFlush(account);
@@ -246,7 +246,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             Long totalSubsribedShares = Long.valueOf(0);
 
             for (ShareAccountTransaction transaction : transactions) {
-                if (transaction.isActive() && transaction.isPurchasTransaction()) {
+                if (transaction.isActive() && transaction.isPurchaseTransaction()) {
                     journalTransactions.add(transaction);
                     totalSubsribedShares += transaction.getTotalShares();
                 }
@@ -369,7 +369,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
 
         try {
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
-            Map<String, Object> changes = this.accountDataSerializer.validateAndApproveAddtionalShares(jsonCommand, account);
+            Map<String, Object> changes = this.accountDataSerializer.validateAndApproveAdditionalShares(jsonCommand, account);
             if (!changes.isEmpty()) {
                 this.shareAccountRepository.save(account);
                 ArrayList<Long> transactionIds = (ArrayList<Long>) changes.get(ShareAccountApiConstants.requestedshares_paramname);
@@ -405,7 +405,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     public CommandProcessingResult rejectAdditionalShares(Long accountId, JsonCommand jsonCommand) {
         try {
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
-            Map<String, Object> changes = this.accountDataSerializer.validateAndRejectAddtionalShares(jsonCommand, account);
+            Map<String, Object> changes = this.accountDataSerializer.validateAndRejectAdditionalShares(jsonCommand, account);
             if (!changes.isEmpty()) {
                 this.shareAccountRepository.save(account);
                 ArrayList<Long> transactionIds = (ArrayList<Long>) changes.get(ShareAccountApiConstants.requestedshares_paramname);

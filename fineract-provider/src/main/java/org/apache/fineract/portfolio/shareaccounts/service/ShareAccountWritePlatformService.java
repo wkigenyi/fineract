@@ -37,7 +37,7 @@ public interface ShareAccountWritePlatformService {
 
     CommandProcessingResult closeShareAccount(Long accountId, JsonCommand jsonCommand);
 
-    CommandProcessingResult applyAddtionalShares(Long accountId, JsonCommand jsonCommand);
+    CommandProcessingResult applyAdditionalShares(Long accountId, JsonCommand jsonCommand);
 
     CommandProcessingResult approveAdditionalShares(Long accountId, JsonCommand jsonCommand);
 

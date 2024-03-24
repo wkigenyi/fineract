@@ -431,7 +431,7 @@ public class ShareAccountReadPlatformServiceImpl implements ShareAccountReadPlat
 
         PurchasedSharesDataRowMapper() {
             StringBuilder buff = new StringBuilder().append(
-                    "saps.id as purchasedId, saps.account_id as accountId, saps.transaction_date as transactionDate, saps.total_shares as purchasedShares, saps.unit_price as unitPrice, ")
+                    "saps.id as purchasedId, saps.account_id as accountId,saps.use_savings as useSavings, saps.transaction_date as transactionDate, saps.total_shares as purchasedShares, saps.unit_price as unitPrice, ")
                     .append("saps.status_enum as purchaseStatus, saps.type_enum as purchaseType, saps.amount as amount, saps.charge_amount as chargeamount, ")
                     .append("saps.amount_paid as amountPaid ");
 
@@ -446,6 +446,7 @@ public class ShareAccountReadPlatformServiceImpl implements ShareAccountReadPlat
             final Long numberOfShares = JdbcSupport.getLong(rs, "purchasedShares");
             final BigDecimal purchasedPrice = rs.getBigDecimal("unitPrice");
             final Integer status = rs.getInt("purchaseStatus");
+            final Boolean useSavings = rs.getBoolean("useSavings");
             final EnumOptionData statusEnum = SharesEnumerations.purchasedSharesEnum(status);
             final Integer type = rs.getInt("purchaseType");
             final EnumOptionData typeEnum = SharesEnumerations.purchasedSharesEnum(type);
@@ -453,7 +454,7 @@ public class ShareAccountReadPlatformServiceImpl implements ShareAccountReadPlat
             final BigDecimal chargeAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "chargeamount");
             final BigDecimal amountPaid = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "amountPaid");
             return new ShareAccountTransactionData(id, accountId, transactionDate, numberOfShares, purchasedPrice, statusEnum, typeEnum,
-                    amount, chargeAmount, amountPaid);
+                    amount, chargeAmount, amountPaid,useSavings);
         }
 
         public String schema() {

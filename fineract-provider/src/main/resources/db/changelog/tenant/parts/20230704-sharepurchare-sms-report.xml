@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.13.xsd">
+    <changeSet id="2023070403" author="wkigenyi">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_report WHERE id = 230 </sqlCheck>
+        </preConditions>
+        <insert tableName="stretchy_report">
+            <column name="id" valueNumeric="230"/>
+            <column name="report_name" value="Share Purchase"/>
+            <column name="report_type" value="SMS"/>
+            <column name="report_subtype" value="Triggered"/>
+            <column name="report_category"/>
+            <column name="report_sql"
+                    value="SELECT
+sc.sharesId AS sharesId,
+sc.id AS clientId,
+sc.firstname,
+IFNULL(sc.middlename,'') AS middlename,
+sc.lastname,
+sc.display_name AS FullName,
+sc.mobile_no AS mobileNo,
+ms.`account_no` AS shareAccountNo,
+ROUND(mst.amountPaid, ms.currency_digits) AS purchaseAmount,
+mst.total_shares AS sharesPurchased,
+ms.total_approved_shares AS totalShares,
+mst.transactionDate AS transactionDate
+FROM m_office mo
+JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(mo.hierarchy, '%') AND ounder.hierarchy LIKE CONCAT('.', '%')
+LEFT JOIN (
+	SELECT
+ 	sa.id AS sharesId,
+	mc.id AS id,
+	mc.firstname AS firstname,
+	mc.middlename AS middlename,
+	mc.lastname AS lastname,
+ 	mc.display_name AS display_name,
+	mc.status_enum AS status_enum,
+ 	mc.mobile_no AS mobile_no, mc.office_id AS office_id,
+ 	mc.staff_id AS staff_id
+	FROM
+	m_share_account sa
+	LEFT JOIN m_client mc ON mc.id = sa.client_id
+	ORDER BY sharesId) sc
+ON sc.office_id = ounder.id
+RIGHT JOIN m_share_account AS ms ON sc.sharesId = ms.id
+RIGHT JOIN(
+SELECT st.amount AS amountPaid, st.id, st.account_id, st.id AS sharesTransactionId, st.transaction_date AS transactionDate,st.total_shares AS total_shares
+FROM  m_share_account_transactions st
+WHERE st.status_enum = 300
+GROUP BY st.account_id
+) AS mst ON mst.account_id = ms.id
+WHERE sc.mobile_no IS NOT NULL AND (mo.id = ${officeId} OR ${officeId} = -1) AND (sc.staff_id = ${loanOfficerId} OR ${loanOfficerId} = -1) AND mst.sharesTransactionId = ${sharesTransactionId}"/>
+            <column name="description" value="Savings Withdrawal"/>
+            <column name="core_report" valueBoolean="false"/>
+            <column name="use_report" valueBoolean="true"/>
+            <column name="self_service_user_report" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+
+</databaseChangeLog>

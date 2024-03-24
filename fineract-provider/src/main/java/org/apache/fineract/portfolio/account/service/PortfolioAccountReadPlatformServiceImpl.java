@@ -31,10 +31,13 @@ import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountDTO;
 import org.apache.fineract.portfolio.account.data.PortfolioAccountData;
 import org.apache.fineract.portfolio.account.exception.AccountTransferNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Service;
 
+@Service
 public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccountReadPlatformService {
 
     private final JdbcTemplate jdbcTemplate;
@@ -42,11 +45,15 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
     // mapper
     private final PortfolioSavingsAccountMapper savingsAccountMapper;
     private final PortfolioLoanAccountMapper loanAccountMapper;
+
+    private final PortfolioShareAccountMapper shareAccountMapper;
     private final PortfolioLoanAccountRefundByTransferMapper accountRefundByTransferMapper;
 
+    @Autowired
     public PortfolioAccountReadPlatformServiceImpl(final JdbcTemplate jdbcTemplate, DatabaseSpecificSQLGenerator sqlGenerator) {
         this.jdbcTemplate = jdbcTemplate;
         this.savingsAccountMapper = new PortfolioSavingsAccountMapper();
+        this.shareAccountMapper = new PortfolioShareAccountMapper();
         this.loanAccountMapper = new PortfolioLoanAccountMapper();
         this.accountRefundByTransferMapper = new PortfolioLoanAccountRefundByTransferMapper(sqlGenerator);
     }
@@ -66,7 +73,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
             final PortfolioAccountType accountType = PortfolioAccountType.fromInt(accountTypeId);
             switch (accountType) {
                 case INVALID:
-                break;
+                    break;
                 case LOAN:
 
                     sql = "select " + this.loanAccountMapper.schema() + " where la.id = ?";
@@ -76,7 +83,17 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     }
 
                     accountData = this.jdbcTemplate.queryForObject(sql, this.loanAccountMapper, sqlParams);
-                break;
+                    break;
+                case SHARES:
+
+                    sql = "select " + this.shareAccountMapper.schema() + " where sa.id = ?";
+                    if (currencyCode != null) {
+                        sql += " and la.currency_code = ?";
+                        sqlParams = new Object[] { accountId, currencyCode };
+                    }
+
+                    accountData = this.jdbcTemplate.queryForObject(sql, this.shareAccountMapper, sqlParams);
+                    break;
                 case SAVINGS:
                     sql = "select " + this.savingsAccountMapper.schema() + " where sa.id = ?";
                     if (currencyCode != null) {
@@ -85,7 +102,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     }
 
                     accountData = this.jdbcTemplate.queryForObject(sql, this.savingsAccountMapper, sqlParams);
-                break;
+                    break;
             }
         } catch (final EmptyResultDataAccessException e) {
             throw new AccountTransferNotFoundException(accountId, e);
@@ -108,7 +125,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
         final PortfolioAccountType accountType = PortfolioAccountType.fromInt(portfolioAccountDTO.getAccountTypeId());
         switch (accountType) {
             case INVALID:
-            break;
+                break;
             case LOAN:
                 sql = "select " + this.loanAccountMapper.schema() + " where ";
                 if (portfolioAccountDTO.getClientId() != null) {
@@ -125,7 +142,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                 }
 
                 accounts = this.jdbcTemplate.query(sql, this.loanAccountMapper, sqlParams.toArray()); // NOSONAR
-            break;
+                break;
             case SAVINGS:
                 sql = "select " + this.savingsAccountMapper.schema() + " where ";
                 if (portfolioAccountDTO.getClientId() != null) {
@@ -156,7 +173,25 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                 }
 
                 accounts = this.jdbcTemplate.query(sql, this.savingsAccountMapper, sqlParams.toArray()); // NOSONAR
-            break;
+                break;
+
+            case SHARES:
+                sql = "select " + this.loanAccountMapper.schema() + " where ";
+                if (portfolioAccountDTO.getClientId() != null) {
+                    sql += " la.client_id = ? and la.loan_status_id in (?) ";
+                    sqlParams.add(portfolioAccountDTO.getClientId());
+                    sqlParams.add(defaultAccountStatus);
+                } else {
+                    sql += " la.loan_status_id in (?) ";
+                    sqlParams.add(defaultAccountStatus);
+                }
+                if (portfolioAccountDTO.getCurrencyCode() != null) {
+                    sql += " and la.currency_code = ?";
+                    sqlParams.add(portfolioAccountDTO.getCurrencyCode());
+                }
+
+                accounts = this.jdbcTemplate.query(sql, this.loanAccountMapper, sqlParams.toArray()); // NOSONAR
+                break;
         }
 
         return accounts;
@@ -184,6 +219,64 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
             sqlBuilder.append("left join m_client c ON c.id = sa.client_id ");
             sqlBuilder.append("left join m_group g ON g.id = sa.group_id ");
             sqlBuilder.append("left join m_staff s ON s.id = sa.field_officer_id ");
+
+            this.schemaSql = sqlBuilder.toString();
+        }
+
+        public String schema() {
+            return this.schemaSql;
+        }
+
+        @Override
+        public PortfolioAccountData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
+
+            final Long id = rs.getLong("id");
+            final String accountNo = rs.getString("accountNo");
+            final String externalId = rs.getString("externalId");
+
+            final Long groupId = JdbcSupport.getLong(rs, "groupId");
+            final String groupName = rs.getString("groupName");
+            final Long clientId = JdbcSupport.getLong(rs, "clientId");
+            final String clientName = rs.getString("clientName");
+
+            final Long productId = rs.getLong("productId");
+            final String productName = rs.getString("productName");
+
+            final Long fieldOfficerId = rs.getLong("fieldOfficerId");
+            final String fieldOfficerName = rs.getString("fieldOfficerName");
+
+            final String currencyCode = rs.getString("currencyCode");
+            final String currencyName = rs.getString("currencyName");
+            final String currencyNameCode = rs.getString("currencyNameCode");
+            final String currencyDisplaySymbol = rs.getString("currencyDisplaySymbol");
+            final Integer currencyDigits = JdbcSupport.getInteger(rs, "currencyDigits");
+            final Integer inMulitplesOf = JdbcSupport.getInteger(rs, "inMultiplesOf");
+            final CurrencyData currency = new CurrencyData(currencyCode, currencyName, currencyDigits, inMulitplesOf, currencyDisplaySymbol,
+                    currencyNameCode);
+
+            return new PortfolioAccountData(id, accountNo, externalId, groupId, groupName, clientId, clientName, productId, productName,
+                    fieldOfficerId, fieldOfficerName, currency);
+        }
+    }
+
+    private static final class PortfolioShareAccountMapper implements RowMapper<PortfolioAccountData> {
+
+        private final String schemaSql;
+
+        PortfolioShareAccountMapper() {
+
+            final StringBuilder sqlBuilder = new StringBuilder(400);
+            sqlBuilder.append("sa.id as id, sa.account_no as accountNo, sa.external_id as externalId, ");
+            sqlBuilder.append("c.id as clientId, c.display_name as clientName, ");
+            sqlBuilder.append("sp.id as productId, sp.name as productName, ");
+            sqlBuilder.append("sa.currency_code as currencyCode, sa.currency_digits as currencyDigits,");
+            sqlBuilder.append("sa.currency_multiplesof as inMultiplesOf, ");
+            sqlBuilder.append("curr.name as currencyName, curr.internationalized_name_code as currencyNameCode, ");
+            sqlBuilder.append("curr.display_symbol as currencyDisplaySymbol ");
+            sqlBuilder.append("from m_share_account sa ");
+            sqlBuilder.append("join m_share_product sp ON sa.product_id = sp.id ");
+            sqlBuilder.append("join m_currency curr on curr.code = sa.currency_code ");
+            sqlBuilder.append("left join m_client c ON c.id = sa.client_id ");
 
             this.schemaSql = sqlBuilder.toString();
         }

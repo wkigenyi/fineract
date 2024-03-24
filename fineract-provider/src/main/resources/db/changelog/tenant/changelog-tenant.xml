@@ -209,4 +209,8 @@
     <include file="parts/0188_create_loan_buy_down_fee_balance.xml" relativeToChangelogFile="true" />
     <include file="parts/0189_add_loan_buydown_fee_event.xml" relativeToChangelogFile="true" />
     <include file="parts/0190_buy_down_fee_amortization.xml" relativeToChangelogFile="true" />
+    <include file="parts/2024-03-23-add-use-savings.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-add-share-purchase-parameters.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-add-share-transaction-id-to-report-parameters.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-transfers-are-not-withdrawals.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
