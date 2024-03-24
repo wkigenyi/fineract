@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements. See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership. The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.13.xsd">
+    <changeSet id="2023070402" author="wkigenyi">
+        <update tableName="stretchy_report">
+            <column name="report_sql" value="SELECT
+sc.savingsId AS savingsId,
+sc.id AS clientId,
+sc.firstname,
+IFNULL(sc.middlename,'') AS middlename,
+sc.lastname,
+sc.display_name AS FullName,
+sc.mobile_no AS mobileNo,
+ms.`account_no` AS savingsAccountNo,
+ROUND(mst.amountPaid, ms.currency_digits) AS withdrawAmount,
+ms.account_balance_derived AS balance,
+mst.transactionDate AS transactionDate
+FROM m_office mo
+JOIN m_office ounder ON ounder.hierarchy LIKE CONCAT(mo.hierarchy, '%') AND ounder.hierarchy LIKE CONCAT('.', '%')
+LEFT JOIN (
+	SELECT
+ 	sa.id AS savingsId,
+	mc.id AS id,
+	mc.firstname AS firstname,
+	mc.middlename AS middlename,
+	mc.lastname AS lastname,
+ 	mc.display_name AS display_name,
+	mc.status_enum AS status_enum,
+ 	mc.mobile_no AS mobile_no, mc.office_id AS office_id,
+ 	mc.staff_id AS staff_id
+	FROM
+	m_savings_account sa
+	LEFT JOIN m_client mc ON mc.id = sa.client_id
+	ORDER BY savingsId) sc
+ON sc.office_id = ounder.id
+RIGHT JOIN m_savings_account AS ms ON sc.savingsId = ms.id
+RIGHT JOIN(
+SELECT st.amount AS amountPaid, st.id, st.savings_account_id, st.id AS savingsTransactionId, st.transaction_date AS transactionDate
+FROM m_savings_account_transaction st
+WHERE st.is_reversed = 0 AND st.id NOT IN ( SELECT from_savings_transaction_id FROM m_account_transfer_transaction )
+GROUP BY st.savings_account_id
+) AS mst ON mst.savings_account_id = ms.id
+WHERE sc.mobile_no IS NOT NULL AND (mo.id = ${officeId} OR ${officeId} = -1) AND (sc.staff_id = ${loanOfficerId} OR ${loanOfficerId} = -1) AND mst.savingsTransactionId = ${savingsTransactionId}"/>
+            <where>report_name="Savings Withdrawal"</where>
+        </update>
+    </changeSet>
+
+
+</databaseChangeLog>

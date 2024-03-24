@@ -22,7 +22,8 @@ public enum PortfolioAccountType {
 
     INVALID(0, "accountType.invalid"), //
     LOAN(1, "accountType.loan"), //
-    SAVINGS(2, "accountType.savings");
+    SAVINGS(2, "accountType.savings"),
+    SHARES(3,"accountType.savings");
 
     private final Integer value;
     private final String code;
@@ -44,16 +45,12 @@ public enum PortfolioAccountType {
 
         PortfolioAccountType enumType = INVALID;
         if (type != null) {
-            switch (type) {
-                case 1:
-                    enumType = LOAN;
-                break;
-                case 2:
-                    enumType = SAVINGS;
-                break;
-                default:
-                    enumType = INVALID;
-            }
+            enumType = switch (type) {
+                case 1 -> LOAN;
+                case 2 -> SAVINGS;
+                case 3 -> SHARES;
+                default -> INVALID;
+            };
         }
         return enumType;
     }
@@ -66,5 +63,8 @@ public enum PortfolioAccountType {
     // TODO: bad practice and unnecessary code! why not just use the enum values themselves!?!
     public boolean isLoanAccount() {
         return this.equals(LOAN);
+    }
+    public boolean isShareAccount(){
+        return this.equals(SHARES);
     }
 }

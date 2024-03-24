@@ -59,7 +59,7 @@ public class AccountTransfersDetailDataValidator {
 
         final Integer fromAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(fromAccountTypeParamName, element);
         baseDataValidator.reset().parameter(fromAccountTypeParamName).value(fromAccountType).notNull()
-                .isOneOfTheseValues(Integer.valueOf(1), Integer.valueOf(2));
+                .isOneOfTheseValues(Integer.valueOf(1), Integer.valueOf(2),Integer.valueOf(3));
 
         final Long toOfficeId = this.fromApiJsonHelper.extractLongNamed(toOfficeIdParamName, element);
         baseDataValidator.reset().parameter(toOfficeIdParamName).value(toOfficeId).notNull().integerGreaterThanZero();
@@ -72,7 +72,7 @@ public class AccountTransfersDetailDataValidator {
 
         final Integer toAccountType = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(toAccountTypeParamName, element);
         baseDataValidator.reset().parameter(toAccountTypeParamName).value(toAccountType).notNull().isOneOfTheseValues(Integer.valueOf(1),
-                Integer.valueOf(2));
+                Integer.valueOf(2),Integer.valueOf(3));
 
     }
 
