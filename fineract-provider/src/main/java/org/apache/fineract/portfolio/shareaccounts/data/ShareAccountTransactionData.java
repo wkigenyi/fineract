@@ -49,4 +49,6 @@ public class ShareAccountTransactionData implements Serializable {
 
     private final BigDecimal amountPaid;
 
+    private final Boolean useSavings;
+
 }

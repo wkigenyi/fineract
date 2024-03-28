@@ -159,4 +159,9 @@
     <include file="parts/0137_add_external_event_for_loan_reamortization.xml" relativeToChangelogFile="true" />
     <include file="parts/0138_add_external_event_for_loan_reaging_reamortization_2.xml" relativeToChangelogFile="true" />
     <include file="parts/0139_add_disburse_without_auto_payment_command.xml" relativeToChangelogFile="true" />
+    <include file="parts/2024-03-23-add-use-savings.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-add-share-purchase-parameters.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-add-share-transaction-id-to-report-parameters.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-sharepurchare-sms-report.xml" relativeToChangelogFile="true" />
+    <include file="parts/20230704-transfers-are-not-withdrawals.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
