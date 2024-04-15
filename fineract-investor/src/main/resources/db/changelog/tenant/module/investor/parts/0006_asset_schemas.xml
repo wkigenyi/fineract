@@ -24,6 +24,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_external_asset_owner_transfer" columnName="sub_status"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_external_asset_owner_transfer">
             <column name="sub_status" type="VARCHAR(50)"/>
         </addColumn>

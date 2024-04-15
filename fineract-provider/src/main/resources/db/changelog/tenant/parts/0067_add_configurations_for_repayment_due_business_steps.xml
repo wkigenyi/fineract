@@ -28,6 +28,9 @@
         </sql>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name="days-before-repayment-is-due"</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="days-before-repayment-is-due"/>
             <column name="value" valueNumeric="1"/>
@@ -46,14 +49,7 @@
             <column name="is_trap_door" valueBoolean="false"/>
             <column name="description" value="Number of days after repayment overdue to raise event"/>
         </insert>
-        <insert tableName="m_external_event_configuration">
-            <column name="type" value="LoanRepaymentDueBusinessEvent"/>
-            <column name="enabled" valueBoolean="false"/>
-        </insert>
-        <insert tableName="m_external_event_configuration">
-            <column name="type" value="LoanRepaymentOverdueBusinessEvent"/>
-            <column name="enabled" valueBoolean="false"/>
-        </insert>
+
         <insert tableName="m_batch_business_steps">
             <column name="job_name" value="LOAN_CLOSE_OF_BUSINESS"/>
             <column name="step_name" value="CHECK_LOAN_REPAYMENT_DUE"/>
@@ -63,6 +59,19 @@
             <column name="job_name" value="LOAN_CLOSE_OF_BUSINESS"/>
             <column name="step_name" value="CHECK_LOAN_REPAYMENT_OVERDUE"/>
             <column name="step_order" value="4"/>
+        </insert>
+    </changeSet>
+    <changeSet id="3" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanRepaymentDueBusinessEvent"</sqlCheck>
+        </preConditions>
+        <insert tableName="m_external_event_configuration">
+            <column name="type" value="LoanRepaymentDueBusinessEvent"/>
+            <column name="enabled" valueBoolean="false"/>
+        </insert>
+        <insert tableName="m_external_event_configuration">
+            <column name="type" value="LoanRepaymentOverdueBusinessEvent"/>
+            <column name="enabled" valueBoolean="false"/>
         </insert>
     </changeSet>
 </databaseChangeLog>

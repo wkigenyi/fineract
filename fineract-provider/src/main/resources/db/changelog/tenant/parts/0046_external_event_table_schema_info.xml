@@ -26,6 +26,11 @@
         <delete tableName="m_external_event"/>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_external_event" columnName="schema"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_external_event">
             <column name="schema" type="VARCHAR(300)">
                 <constraints nullable="false"/>

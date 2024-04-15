@@ -23,6 +23,9 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE id=55</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="id" valueNumeric="55"/>
             <column name="name" value="loan-arrears-delinquency-display-data"/>

@@ -27,9 +27,15 @@
         (https://github.com/spring-projects/spring-batch/wiki/Spring-Batch-5.0-Migration-Guide)
     -->
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="batch_job_execution" columnName="job_configuration_location"/>
+        </preConditions>
         <dropColumn tableName="BATCH_JOB_EXECUTION" columnName="JOB_CONFIGURATION_LOCATION"/>
     </changeSet>
     <changeSet author="fineract" id="2" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="batch_job_execution_params" columnName="string_value"/>
+        </preConditions>
         <sql>
             UPDATE BATCH_JOB_EXECUTION_PARAMS
             SET STRING_VAL = DATE_FORMAT(DATE_VAL, 'YYYY-MM-DDTHH:MM:SSZ')
@@ -96,6 +102,11 @@
         <!--
             org/springframework/batch/core/migration/5.0/migration-mysql.sql
         -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="batch_step_execution" columnName="create_time"/>
+            </not>
+        </preConditions>
         <sql>
             ALTER TABLE BATCH_STEP_EXECUTION ADD CREATE_TIME DATETIME(6) NOT NULL DEFAULT '1970-01-01 00:00:00';
             ALTER TABLE BATCH_STEP_EXECUTION MODIFY START_TIME DATETIME(6) NULL;
