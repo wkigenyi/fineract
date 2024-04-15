@@ -45,7 +45,11 @@
   </changeSet>
 
   <changeSet author="fineract" id="3" context="mysql">
-
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <columnExists tableName="m_external_asset_owner_transfer" columnName="external_loan_id"/>
+      </not>
+    </preConditions>
     <addColumn tableName="m_external_asset_owner_transfer">
       <column name="external_loan_id" type="varchar(100)"/>
       <column name="loan_id" type="bigint" remarks="Loan ID">
@@ -54,7 +58,11 @@
     </addColumn>
   </changeSet>
   <changeSet author="fineract" id="4" context="mysql">
-
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <foreignKeyConstraintExists foreignKeyName="FK_external_asset_owner_transfer_loan_id"/>
+      </not>
+    </preConditions>
     <addForeignKeyConstraint baseColumnNames="loan_id"
                              baseTableName="m_external_asset_owner_transfer"
                              constraintName="FK_external_asset_owner_transfer_loan_id" deferrable="false"

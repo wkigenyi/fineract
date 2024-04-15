@@ -23,6 +23,11 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_loan_account_locks" columnName="lock_placed_on_cob_business_date"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_loan_account_locks">
             <column name="lock_placed_on_cob_business_date" type="DATE">
             </column>

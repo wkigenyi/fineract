@@ -23,6 +23,11 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_delinquency_range"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_delinquency_range">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
@@ -52,6 +57,7 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
+
         <createTable tableName="m_delinquency_bucket">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
@@ -243,6 +249,11 @@
         </createTable>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_m_delinquency_range_mapping"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="delinquency_range_id" baseTableName="m_delinquency_bucket_mappings"
                                  constraintName="FK_m_delinquency_range_mapping" deferrable="false"
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
@@ -253,6 +264,11 @@
                                  referencedColumnNames="id" referencedTableName="m_delinquency_bucket" validate="true"/>
     </changeSet>
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_product_loan" columnName="delinquency_bucket_id"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_product_loan">
             <column name="delinquency_bucket_id" type="BIGINT" defaultValueComputed="NULL"/>
         </addColumn>
@@ -262,6 +278,11 @@
                                  referencedColumnNames="id" referencedTableName="m_delinquency_bucket" validate="true"/>
     </changeSet>
     <changeSet author="fineract" id="4">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_m_delinquency_tags_range"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="delinquency_range_id" baseTableName="m_loan_delinquency_tag_history"
                                  constraintName="FK_m_delinquency_tags_range" deferrable="false"
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
@@ -272,6 +293,9 @@
                                  referencedColumnNames="id" referencedTableName="m_loan" validate="true"/>
     </changeSet>
     <changeSet author="fineract" id="5">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code="READ_DELINQUENCY_BUCKET"</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="organisation"/>
             <column name="code" value="READ_DELINQUENCY_BUCKET"/>

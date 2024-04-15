@@ -77,7 +77,7 @@
             </column>
         </addColumn>
     </changeSet>
-    <changeSet author="fineract" id="4">
+    <changeSet author="fineract" id="4" failOnError="false">
         <addForeignKeyConstraint baseColumnNames="delinquency_range_id" baseTableName="m_loan_installment_delinquency_tag_history"
                                  constraintName="FK_m_delinquency_installment_tags_range" deferrable="false"
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"

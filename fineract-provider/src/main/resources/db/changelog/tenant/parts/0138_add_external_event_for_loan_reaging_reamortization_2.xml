@@ -23,24 +23,36 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanReAmortizeBusinessEvent"</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="LoanReAmortizeBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>
         </insert>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanUndoReAmortizeBusinessEvent"</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="LoanUndoReAmortizeBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>
         </insert>
     </changeSet>
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanReAgeBusinessEvent"</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="LoanReAgeBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>
         </insert>
     </changeSet>
     <changeSet author="fineract" id="4">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanUndoReAgeBusinessEvent"</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="LoanUndoReAgeBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>
