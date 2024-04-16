@@ -116,8 +116,10 @@
             </column>
         </addColumn>
     </changeSet>
-    <changeSet author="fineract" id="1002-3" failOnError="false">
-
+    <changeSet author="fineract" id="1002-3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">select COUNT(*) from information_schema.table_constraints where constraint_name="uq_m_loan_product_payment_allocation_rule"</sqlCheck>
+        </preConditions>
         <addUniqueConstraint tableName="m_loan_product_payment_allocation_rule" columnNames="loan_product_id,transaction_type" constraintName="uq_m_loan_product_payment_allocation_rule"/>
         <addUniqueConstraint tableName="m_loan_payment_allocation_rule" columnNames="loan_id,transaction_type" constraintName="uq_m_loan_payment_allocation_rule"/>
     </changeSet>

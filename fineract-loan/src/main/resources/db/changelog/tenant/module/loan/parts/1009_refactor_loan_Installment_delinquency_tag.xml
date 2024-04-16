@@ -22,10 +22,18 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="fineract" id="1" failOnError="false">
+    <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_loan_installment_delinquency_tag"/>
+            </not>
+        </preConditions>
         <renameTable oldTableName="m_loan_installment_delinquency_tag_history" newTableName="m_loan_installment_delinquency_tag"/>
     </changeSet>
     <changeSet author="fineract" id="2" failOnError="false">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_m_delinquency_installment_tags_installment"/>
+        </preConditions>
         <dropForeignKeyConstraint baseTableName="m_loan_installment_delinquency_tag" constraintName="FK_m_delinquency_installment_tags_installment" />
     </changeSet>
 </databaseChangeLog>
