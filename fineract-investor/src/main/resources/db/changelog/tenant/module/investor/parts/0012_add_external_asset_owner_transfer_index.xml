@@ -22,7 +22,12 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
-    <changeSet author="fineract" id="1" context="mysql" failOnError="false">
+    <changeSet author="fineract" id="1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_external_asset_owner_transfer"/>
+            </not>
+        </preConditions>
         <createIndex tableName="m_external_asset_owner_transfer" indexName="external_asset_owner_transfer_loan_id">
             <column name="loan_id"/>
         </createIndex>
