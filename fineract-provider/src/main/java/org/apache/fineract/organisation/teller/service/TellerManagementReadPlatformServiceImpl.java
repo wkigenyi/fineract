@@ -666,7 +666,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_staff staff on user.staff_id = staff.id ");
             sqlBuilder.append(" left join m_cashiers c on c.staff_id = staff.id ");
             sqlBuilder.append(" left join m_payment_detail payDetails on payDetails.id = cli_txn.payment_detail_id ");
-            sqlBuilder.append(" left join m_payment_type payType on payType.id = payDetails.payment_type_id ");
+            sqlBuilder.append(" right join (SELECT * FROM m_payment_type WHERE is_cash_payment=TRUE) payType on payType.id = payDetails.payment_type_id ");
 
             return sqlBuilder.toString();
         }
