@@ -397,7 +397,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
     @Override
     public CashierTransactionsWithSummaryData retrieveCashierTransactionsWithSummary(final Long cashierId, final boolean includeAllTellers,
-            final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
+                                                                                     final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
         CashierData cashierData = findCashier(cashierId);
         Long staffId = cashierData.getStaffId();
         StaffData staffData = staffReadPlatformService.retrieveStaff(staffId);
@@ -450,7 +450,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
 
     @Override
     public Page<CashierTransactionData> retrieveCashierTransactions(final Long cashierId, final boolean includeAllTellers,
-            final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
+                                                                    final LocalDate fromDate, final LocalDate toDate, final String currencyCode, final SearchParameters searchParameters) {
         CashierData cashierData = findCashier(cashierId);
         Long staffId = cashierData.getStaffId();
         StaffData staffData = staffReadPlatformService.retrieveStaff(staffId);
@@ -483,7 +483,9 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
                 + " where cli_txn.is_reversed = false and c.id = ? and cli_txn.currency_code = ? and o.hierarchy like ? and cli_txn.transaction_date "
                 + " between c.start_date and date_add(c.end_date, interval 1 day) "
                 + " and renum.enum_value in ('PAY_CHARGE', 'WAIVE_CHARGE') "
-                + " and (cli_txn.payment_detail_id IS NULL OR payType.is_cash_payment = true) ) " + " order by created_date ";
+                + " and (cli_txn.payment_detail_id IS NULL OR payType.is_cash_payment = true) ) "
+                + " UNION (SELECT DISTINCT " + ctm.rawTxnSchema()
+                + " order by created_date ";
 
         if (searchParameters.hasLimit()) {
             sql += " ";
@@ -634,6 +636,28 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" left join m_account_transfer_transaction acnttrans ");
             sqlBuilder.append(" on (acnttrans.from_loan_transaction_id = loan_txn.id ");
             sqlBuilder.append(" or acnttrans.to_loan_transaction_id = loan_txn.id) ");
+
+            return sqlBuilder.toString();
+        }
+
+        public String rawTxnSchema() {
+
+            final StringBuilder sqlBuilder = new StringBuilder(400);
+
+            sqlBuilder.append(" agje.id as txn_id,c.id as cashier_id,");
+            sqlBuilder.append(" 104 as cash_txn_type, ");
+            sqlBuilder.append(" agje.amount as txn_amount,agje.entry_date as txn_date,");
+            sqlBuilder.append(" concat (agje.description,':',agje.ref_num) as txn_note, ");
+            sqlBuilder.append(" NULL as entity_type,NULL as entity_id,agje.created_date as created_date, ");
+            sqlBuilder.append(" o.id as office_id,o.name as office_name,null as teller_id,null as teller_name,staff.display_name as cashier_name ");
+            sqlBuilder.append(" FROM (SELECT * FROM acc_gl_journal_entry WHERE type_enum = 1 ) agje ");
+            sqlBuilder.append(" JOIN m_office o ON o.id = agje.office_id ");
+            sqlBuilder.append(" JOIN m_appuser user ON user.id = agje.created_by ");
+            sqlBuilder.append(" JOIN m_staff staff ON user.staff_id = staff.id ");
+            sqlBuilder.append(" JOIN m_cashiers c on c.staff_id = staff.id ");
+            sqlBuilder.append(" JOIN m_payment_detail payDetails on payDetails.id = agje.payment_details_id ");
+            sqlBuilder.append(" JOIN (SELECT * FROM m_payment_type WHERE is_cash_payment=TRUE) payType on payType.id = payDetails.payment_type_id )");
+
 
             return sqlBuilder.toString();
         }
