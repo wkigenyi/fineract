@@ -647,7 +647,7 @@ public class TellerManagementReadPlatformServiceImpl implements TellerManagement
             sqlBuilder.append(" agje.id as txn_id,c.id as cashier_id,");
             sqlBuilder.append(" 104 as cash_txn_type, ");
             sqlBuilder.append(" agje.amount as txn_amount,agje.entry_date as txn_date,");
-            sqlBuilder.append(" concat (agje.description,':',agje.ref_num) as txn_note, ");
+            sqlBuilder.append(" concat (agje.description,':',paymentDetails.check_number) as txn_note, ");
             sqlBuilder.append(" NULL as entity_type,NULL as entity_id,agje.created_date as created_date, ");
             sqlBuilder.append(" o.id as office_id,o.name as office_name,null as teller_id,null as teller_name,staff.display_name as cashier_name ");
             sqlBuilder.append(" FROM (SELECT * FROM acc_gl_journal_entry WHERE type_enum = 1 ) agje ");
