@@ -101,6 +101,11 @@
         </addColumn>
     </changeSet>
     <changeSet id="9" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_loan_transaction" columnName="created_by"/>
+            </not>
+        </preConditions>
         <renameColumn tableName="m_loan_transaction" oldColumnName="createdby_id" newColumnName="created_by" columnDataType="BIGINT"/>
         <renameColumn tableName="m_loan_transaction" oldColumnName="lastmodifiedby_id" newColumnName="last_modified_by" columnDataType="BIGINT"/>
     </changeSet>
