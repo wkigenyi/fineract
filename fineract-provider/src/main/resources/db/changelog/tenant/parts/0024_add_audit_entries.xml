@@ -81,6 +81,11 @@
     </changeSet>
     <!-- Client transaction -->
     <changeSet author="fineract" id="client-transaction-1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_client_transaction" columnName="created_on_utc"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_client_transaction">
             <column name="created_on_utc" type="DATETIME"/>
             <column name="created_by" type="BIGINT" valueComputed="appuser_id"/>
