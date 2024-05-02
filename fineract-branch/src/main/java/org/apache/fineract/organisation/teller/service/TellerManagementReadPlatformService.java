@@ -64,7 +64,13 @@ public interface TellerManagementReadPlatformService {
     Page<CashierTransactionData> retrieveCashierTransactions(Long cashierId, boolean includeAllTellers, LocalDate fromDate,
             LocalDate toDate, String currencyCode, SearchParameters searchParameters);
 
+    Page<CashierTransactionData> retrieveBranchCashierTransactions(Long officeId, boolean includeAllTellers, LocalDate fromDate,
+            LocalDate toDate, String currencyCode, SearchParameters searchParameters);
+
     CashierTransactionsWithSummaryData retrieveCashierTransactionsWithSummary(Long cashierId, boolean includeAllTellers, LocalDate fromDate,
             LocalDate toDate, String currencyCode, SearchParameters searchParameters);
+
+    CashierTransactionsWithSummaryData retrieveBranchCashierTransactionsWithSummary(Long officeId, boolean includeAllTellers,
+            LocalDate fromDate, LocalDate toDate, String currencyCode, SearchParameters searchParameters);
 
 }

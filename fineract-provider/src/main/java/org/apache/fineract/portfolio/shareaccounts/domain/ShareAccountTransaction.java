@@ -18,12 +18,11 @@
  */
 package org.apache.fineract.portfolio.shareaccounts.domain;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-
-import jakarta.persistence.*;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 
 @Entity
@@ -86,7 +85,7 @@ public class ShareAccountTransaction extends AbstractPersistableCustom {
     }
 
     public ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue,
-                                   final Boolean useSavings) {
+            final Boolean useSavings) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -98,7 +97,7 @@ public class ShareAccountTransaction extends AbstractPersistableCustom {
     }
 
     private ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue,
-                                    final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount, final BigDecimal amountPaid) {
+            final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount, final BigDecimal amountPaid) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -110,7 +109,7 @@ public class ShareAccountTransaction extends AbstractPersistableCustom {
     }
 
     public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate, final Long totalShares,
-                                                                  final BigDecimal shareValue) {
+            final BigDecimal shareValue) {
         final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
         final Integer type = PurchasedSharesStatusType.REDEEMED.getValue();
         final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
@@ -240,8 +239,8 @@ public class ShareAccountTransaction extends AbstractPersistableCustom {
         if (isRedeemTransaction()) {
             this.amountPaid = this.amountPaid.subtract(amountPaid);
         } else if (isPurchaseTransaction() /*
-         * || isPurchaseRejectedTransaction()
-         */) {
+                                            * || isPurchaseRejectedTransaction()
+                                            */) {
             this.amountPaid = this.amountPaid.add(amountPaid);
         }
     }

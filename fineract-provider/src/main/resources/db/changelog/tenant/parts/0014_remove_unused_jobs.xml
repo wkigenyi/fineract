@@ -21,10 +21,14 @@
 -->
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="0">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="scheduledjobsFK"/>
+        </preConditions>
         <comment>Drop FK scheduledjobsFK</comment>
         <dropForeignKeyConstraint baseTableName="job_run_history" constraintName="scheduledjobsFK"/>
     </changeSet>
     <changeSet author="fineract" id="1">
+
         <delete tableName="job">
             <where>name='Update loan Summary'</where>
         </delete>
@@ -33,6 +37,9 @@
         </delete>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_loan_paid_in_advance"/>
+        </preConditions>
         <dropTable cascadeConstraints="true"
                    tableName="m_loan_paid_in_advance"/>
     </changeSet>

@@ -41,10 +41,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.commands.domain.CommandWrapper;
 import org.apache.fineract.commands.service.CommandWrapperBuilder;
 import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.apache.fineract.infrastructure.core.api.DateParam;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
+import org.apache.fineract.infrastructure.core.data.DateFormat;
 import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.core.service.Page;
@@ -306,6 +309,10 @@ public class TellerApiResource {
     public String getTransactionsForCashier(@PathParam("tellerId") @Parameter(description = "tellerId") final Long tellerId,
             @PathParam("cashierId") @Parameter(description = "cashierId") final Long cashierId,
             @QueryParam("currencyCode") @Parameter(description = "currencyCode") final String currencyCode,
+            @QueryParam("locale") @Parameter(description = "locale") final String locale,
+            @QueryParam("dateFormat") @Parameter(description = "dateFormat") String rawDateFormat,
+            @QueryParam("fromDate") @Parameter(description = "fromDate") DateParam fromDateParam,
+            @QueryParam("toDate") @Parameter(description = "toDate") DateParam toDateParam,
             @QueryParam("offset") @Parameter(description = "offset") final Integer offset,
             @QueryParam("limit") @Parameter(description = "limit") final Integer limit,
             @QueryParam("orderBy") @Parameter(description = "orderBy") final String orderBy,
@@ -315,8 +322,17 @@ public class TellerApiResource {
         this.readPlatformService.findTeller(tellerId);
         this.readPlatformService.findCashier(cashierId);
 
-        final LocalDate fromDate = null;
-        final LocalDate toDate = null;
+        final DateFormat dateFormat = StringUtils.isBlank(rawDateFormat) ? null : new DateFormat(rawDateFormat);
+
+        LocalDate fromDate = null;
+        if (fromDateParam != null) {
+            fromDate = fromDateParam.getDate("fromDate", dateFormat, locale);
+        }
+
+        LocalDate toDate = null;
+        if (toDateParam != null) {
+            toDate = toDateParam.getDate("toDate", dateFormat, locale);
+        }
         sqlValidator.validate(orderBy);
         sqlValidator.validate(sortOrder);
         final SearchParameters searchParameters = SearchParameters.builder().limit(limit).offset(offset).orderBy(orderBy)
@@ -337,6 +353,10 @@ public class TellerApiResource {
     public String getTransactionsWtihSummaryForCashier(@PathParam("tellerId") @Parameter(description = "tellerId") final Long tellerId,
             @PathParam("cashierId") @Parameter(description = "cashierId") final Long cashierId,
             @QueryParam("currencyCode") @Parameter(description = "currencyCode") final String currencyCode,
+            @QueryParam("locale") @Parameter(description = "locale") final String locale,
+            @QueryParam("dateFormat") @Parameter(description = "dateFormat") final String rawDateFormat,
+            @QueryParam("fromDate") @Parameter(description = "fromDate") final DateParam fromDateParam,
+            @QueryParam("toDate") @Parameter(description = "toDate") final DateParam toDateParam,
             @QueryParam("offset") @Parameter(description = "offset") final Integer offset,
             @QueryParam("limit") @Parameter(description = "limit") final Integer limit,
             @QueryParam("orderBy") @Parameter(description = "orderBy") final String orderBy,
@@ -346,8 +366,16 @@ public class TellerApiResource {
         this.readPlatformService.findTeller(tellerId);
         this.readPlatformService.findCashier(cashierId);
 
-        final LocalDate fromDate = null;
-        final LocalDate toDate = null;
+        final DateFormat dateFormat = StringUtils.isBlank(rawDateFormat) ? null : new DateFormat(rawDateFormat);
+
+        LocalDate fromDate = null;
+        if (fromDateParam != null) {
+            fromDate = fromDateParam.getDate("fromDate", dateFormat, locale);
+        }
+        LocalDate toDate = null;
+        if (toDateParam != null) {
+            toDate = toDateParam.getDate("toDate", dateFormat, locale);
+        }
 
         sqlValidator.validate(orderBy);
         sqlValidator.validate(sortOrder);
@@ -356,6 +384,50 @@ public class TellerApiResource {
 
         final CashierTransactionsWithSummaryData cashierTxnWithSummary = this.readPlatformService
                 .retrieveCashierTransactionsWithSummary(cashierId, false, fromDate, toDate, currencyCode, searchParameters);
+
+        return this.jsonSerializer.serialize(cashierTxnWithSummary);
+    }
+
+    @GET
+    @Path("{officeId}/summaryandtransactions")
+    @Consumes({ MediaType.APPLICATION_JSON })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Transactions Wtih Summary For Cashier", description = "")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TellerApiResourceSwagger.GetTellersTellerIdCashiersCashiersIdSummaryAndTransactionsResponse.class))) })
+    public String getBranchTransactionsWithSummary(@PathParam("officeId") @Parameter(description = "officeId") final Long officeId,
+            @QueryParam("currencyCode") @Parameter(description = "currencyCode") final String currencyCode,
+            @QueryParam("locale") @Parameter(description = "locale") final String locale,
+            @QueryParam("dateFormat") @Parameter(description = "dateFormat") final String rawDateFormat,
+            @QueryParam("fromDate") @Parameter(description = "fromDate") final DateParam fromDateParam,
+            @QueryParam("toDate") @Parameter(description = "toDate") final DateParam toDateParam,
+            @QueryParam("offset") @Parameter(description = "offset") final Integer offset,
+            @QueryParam("limit") @Parameter(description = "limit") final Integer limit,
+            @QueryParam("orderBy") @Parameter(description = "orderBy") final String orderBy,
+            @QueryParam("sortOrder") @Parameter(description = "sortOrder") final String sortOrder) {
+        // TODO: can we remove these 2 calls? we don't use the results, but left it here in case something is done in
+        // the functions
+        // this.readPlatformService.findTeller(tellerId);
+        // this.readPlatformService.findCashier(cashierId);
+
+        final DateFormat dateFormat = StringUtils.isBlank(rawDateFormat) ? null : new DateFormat(rawDateFormat);
+
+        LocalDate fromDate = null;
+        if (fromDateParam != null) {
+            fromDate = fromDateParam.getDate("fromDate", dateFormat, locale);
+        }
+        LocalDate toDate = null;
+        if (toDateParam != null) {
+            toDate = toDateParam.getDate("toDate", dateFormat, locale);
+        }
+
+        sqlValidator.validate(orderBy);
+        sqlValidator.validate(sortOrder);
+        final SearchParameters searchParameters = SearchParameters.builder().limit(limit).offset(offset).orderBy(orderBy)
+                .sortOrder(sortOrder).build();
+
+        final CashierTransactionsWithSummaryData cashierTxnWithSummary = this.readPlatformService
+                .retrieveBranchCashierTransactionsWithSummary(officeId, false, fromDate, toDate, currencyCode, searchParameters);
 
         return this.jsonSerializer.serialize(cashierTxnWithSummary);
     }

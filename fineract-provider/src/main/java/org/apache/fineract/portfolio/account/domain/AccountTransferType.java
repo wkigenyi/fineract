@@ -28,9 +28,8 @@ public enum AccountTransferType {
     LOAN_REPAYMENT(2, "accountTransferType.loan.repayment"), //
     CHARGE_PAYMENT(3, "accountTransferType.charge.payment"), //
     INTEREST_TRANSFER(4, "accountTransferType.interest.transfer"), //
-    LOAN_DOWN_PAYMENT(5, "accountTransferType.loan.downpayment"),//
-    SHARE_PURCHASE(98, "accountTransferType.share.purchase"),
-    SHARE_TRANSFER(99, "accountTransferType.share.transfer");
+    LOAN_DOWN_PAYMENT(5, "accountTransferType.loan.downpayment"), //
+    SHARE_PURCHASE(98, "accountTransferType.share.purchase"), SHARE_TRANSFER(99, "accountTransferType.share.transfer");
 
     private final Integer value;
     private final String code;
@@ -56,10 +55,10 @@ public enum AccountTransferType {
             break;
             case 98:
                 enumeration = AccountTransferType.SHARE_PURCHASE;
-                break;
+            break;
             case 99:
                 enumeration = AccountTransferType.SHARE_TRANSFER;
-                break;
+            break;
         }
         return enumeration;
     }
@@ -100,9 +99,11 @@ public enum AccountTransferType {
     public boolean isLoanDownPayment() {
         return this.value.equals(AccountTransferType.LOAN_DOWN_PAYMENT.getValue());
     }
+
     public boolean isSharePurchase() {
         return this.value.equals(AccountTransferType.SHARE_PURCHASE.getValue());
     }
+
     public boolean isShareTransfer() {
         return this.value.equals(AccountTransferType.SHARE_TRANSFER.getValue());
     }

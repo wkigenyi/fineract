@@ -71,7 +71,7 @@ public class PurchasedSharesReadPlatformServiceImpl implements PurchasedSharesRe
             final Boolean useSavings = rs.getBoolean("use_savings");
 
             return new ShareAccountTransactionData(id, accountId, purchasedDate, numberOfShares, purchasedPrice, statusEnum, typeEnum,
-                    amount, chargeAmount, amountPaid,useSavings);
+                    amount, chargeAmount, amountPaid, useSavings);
         }
 
         public String schema() {

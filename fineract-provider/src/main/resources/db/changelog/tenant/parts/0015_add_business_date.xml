@@ -43,6 +43,9 @@
         </createTable>
     </changeSet>
     <changeSet id="2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name="enable_business_date"</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="enable_business_date"/>
             <column name="value"/>
