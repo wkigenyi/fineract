@@ -129,6 +129,9 @@
                                  referencedTableName="m_appuser" validate="true"/>
     </changeSet>
     <changeSet id="client-transaction-4" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_m_client_transaction_m_appuser"/>
+        </preConditions>
         <dropForeignKeyConstraint baseTableName="m_client_transaction" constraintName="FK_m_client_transaction_m_appuser"/>
         <dropColumn tableName="m_client_transaction">
             <column name="appuser_id"/>
