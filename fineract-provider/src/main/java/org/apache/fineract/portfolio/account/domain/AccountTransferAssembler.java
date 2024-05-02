@@ -47,7 +47,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSavingsToSavingsTransfer(final JsonCommand command, final SavingsAccount fromSavingsAccount,
-                                                                   final SavingsAccount toSavingsAccount, final SavingsAccountTransaction withdrawal, final SavingsAccountTransaction deposit) {
+            final SavingsAccount toSavingsAccount, final SavingsAccountTransaction withdrawal, final SavingsAccountTransaction deposit) {
 
         final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler.assembleSavingsToSavingsTransfer(command,
                 fromSavingsAccount, toSavingsAccount);
@@ -64,7 +64,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSavingsToSharesTransfer(final JsonCommand command, final SavingsAccount fromSavingsAccount,
-                                                                  final ShareAccount toShareAccount, final SavingsAccountTransaction withdrawal, final ShareAccountTransaction sharePurchase) {
+            final ShareAccount toShareAccount, final SavingsAccountTransaction withdrawal, final ShareAccountTransaction sharePurchase) {
 
         final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler
                 .assembleSavingsToSharesTransfer(fromSavingsAccount, toShareAccount);
@@ -81,17 +81,14 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSharesToSharesTransfer(final JsonCommand command, final ShareAccount fromShareAccount,
-                                                                 final ShareAccount toShareAccount, final ShareAccountTransaction redeem, final ShareAccountTransaction sharePurchase) {
+            final ShareAccount toShareAccount, final ShareAccountTransaction redeem, final ShareAccountTransaction sharePurchase) {
 
         final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler
                 .assembleSharesToSharesTransfer(fromShareAccount, toShareAccount);
 
         final LocalDate transactionDate = command.localDateValueOfParameterNamed(transferDateParamName);
 
-
-
         BigDecimal transactionAmount = sharePurchase.amount();
-
 
         final Money transactionMonetaryAmount = Money.of(fromShareAccount.getCurrency(), transactionAmount);
 
@@ -103,7 +100,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSavingsToLoanTransfer(final JsonCommand command, final SavingsAccount fromSavingsAccount,
-                                                                final Loan toLoanAccount, final SavingsAccountTransaction withdrawal, final LoanTransaction loanRepaymentTransaction) {
+            final Loan toLoanAccount, final SavingsAccountTransaction withdrawal, final LoanTransaction loanRepaymentTransaction) {
 
         final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler.assembleSavingsToLoanTransfer(command,
                 fromSavingsAccount, toLoanAccount);
@@ -118,7 +115,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleLoanToSavingsTransfer(final JsonCommand command, final Loan fromLoanAccount,
-                                                                final SavingsAccount toSavingsAccount, final SavingsAccountTransaction deposit, final LoanTransaction loanRefundTransaction) {
+            final SavingsAccount toSavingsAccount, final SavingsAccountTransaction deposit, final LoanTransaction loanRefundTransaction) {
 
         final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler.assembleLoanToSavingsTransfer(command,
                 fromLoanAccount, toSavingsAccount);
@@ -136,8 +133,8 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSavingsToLoanTransfer(final AccountTransferDTO accountTransferDTO,
-                                                                final SavingsAccount fromSavingsAccount, final Loan toLoanAccount, final SavingsAccountTransaction savingsAccountTransaction,
-                                                                final LoanTransaction loanTransaction) {
+            final SavingsAccount fromSavingsAccount, final Loan toLoanAccount, final SavingsAccountTransaction savingsAccountTransaction,
+            final LoanTransaction loanTransaction) {
         final Money transactionMonetaryAmount = Money.of(fromSavingsAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
         AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
         if (accountTransferDetails == null) {
@@ -152,8 +149,8 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleSavingsToSavingsTransfer(final AccountTransferDTO accountTransferDTO,
-                                                                   final SavingsAccount fromSavingsAccount, final SavingsAccount toSavingsAccount, final SavingsAccountTransaction withdrawal,
-                                                                   final SavingsAccountTransaction deposit) {
+            final SavingsAccount fromSavingsAccount, final SavingsAccount toSavingsAccount, final SavingsAccountTransaction withdrawal,
+            final SavingsAccountTransaction deposit) {
         final Money transactionMonetaryAmount = Money.of(fromSavingsAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
         AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
         if (accountTransferDetails == null) {
@@ -169,7 +166,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleLoanToSavingsTransfer(final AccountTransferDTO accountTransferDTO, final Loan fromLoanAccount,
-                                                                final SavingsAccount toSavingsAccount, final SavingsAccountTransaction deposit, final LoanTransaction loanRefundTransaction) {
+            final SavingsAccount toSavingsAccount, final SavingsAccountTransaction deposit, final LoanTransaction loanRefundTransaction) {
         final Money transactionMonetaryAmount = Money.of(fromLoanAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
         AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
         if (accountTransferDetails == null) {
@@ -184,7 +181,7 @@ public class AccountTransferAssembler {
     }
 
     public AccountTransferDetails assembleLoanToLoanTransfer(final AccountTransferDTO accountTransferDTO, final Loan fromLoanAccount,
-                                                             final Loan toLoanAccount, final LoanTransaction disburseTransaction, final LoanTransaction repaymentTransaction) {
+            final Loan toLoanAccount, final LoanTransaction disburseTransaction, final LoanTransaction repaymentTransaction) {
         final Money transactionMonetaryAmount = Money.of(fromLoanAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
         AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
         if (accountTransferDetails == null) {

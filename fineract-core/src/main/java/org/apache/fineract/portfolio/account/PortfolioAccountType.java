@@ -24,7 +24,6 @@ public enum PortfolioAccountType {
     LOAN(1, "accountType.loan"), //
     SAVINGS(2, "accountType.savings"),
     SHARES(3,"accountType.savings");
-    ;
 
     private final Integer value;
     private final String code;

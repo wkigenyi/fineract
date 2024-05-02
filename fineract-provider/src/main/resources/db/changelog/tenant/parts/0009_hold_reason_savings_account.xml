@@ -33,6 +33,9 @@
         </addColumn>
     </changeSet>
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_code WHERE code_name="SavingsAccountBlockReasons"</sqlCheck>
+        </preConditions>
         <insert tableName="m_code">
             <column name="code_name" value="SavingsAccountBlockReasons"/>
             <column name="is_system_defined" valueBoolean="true"/>

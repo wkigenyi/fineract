@@ -129,21 +129,22 @@ public class ShareAccountDataSerializer {
 
     private static final Set<String> shareTransferParameters = new HashSet<>(
             Arrays.asList(AccountDetailConstants.localeParamName, AccountDetailConstants.dateFormatParamName,
-                    AccountDetailConstants.fromOfficeIdParamName, AccountDetailConstants.fromClientIdParamName, AccountDetailConstants.fromAccountIdParamName,
-                    AccountDetailConstants.toOfficeIdParamName, AccountDetailConstants.toClientIdParamName, AccountDetailConstants.toAccountIdParamName,
-                    AccountDetailConstants.transferTypeParamName,AccountTransfersApiConstants.transferDateParamName,AccountTransfersApiConstants.transferDescriptionParamName,
-                    AccountDetailConstants.fromAccountTypeParamName,AccountDetailConstants.toAccountTypeParamName,
-                    AccountTransfersApiConstants.transferAmountParamName));
+                    AccountDetailConstants.fromOfficeIdParamName, AccountDetailConstants.fromClientIdParamName,
+                    AccountDetailConstants.fromAccountIdParamName, AccountDetailConstants.toOfficeIdParamName,
+                    AccountDetailConstants.toClientIdParamName, AccountDetailConstants.toAccountIdParamName,
+                    AccountDetailConstants.transferTypeParamName, AccountTransfersApiConstants.transferDateParamName,
+                    AccountTransfersApiConstants.transferDescriptionParamName, AccountDetailConstants.fromAccountTypeParamName,
+                    AccountDetailConstants.toAccountTypeParamName, AccountTransfersApiConstants.transferAmountParamName));
 
     @Autowired
     public ShareAccountDataSerializer(final PlatformSecurityContext platformSecurityContext, final FromJsonHelper fromApiJsonHelper,
-                                      final ChargeRepositoryWrapper chargeRepository, final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper,
-                                      final ClientRepositoryWrapper clientRepositoryWrapper, final ShareProductRepositoryWrapper shareProductRepository,
-                                      final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
-                                      final SavingsAccountDomainService savingsAccountDomainService, final SavingsAccountAssembler savingsAccountAssembler,
-                                      final AccountTransferDetailAssembler accountTransferDetailAssembler,
-                                      final AccountTransferDetailRepository accountTransferDetailRepository,
-                                      final AccountTransferRepository accountTransferRepository) {
+            final ChargeRepositoryWrapper chargeRepository, final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper,
+            final ClientRepositoryWrapper clientRepositoryWrapper, final ShareProductRepositoryWrapper shareProductRepository,
+            final SavingsAccountReadPlatformService savingsAccountReadPlatformService,
+            final SavingsAccountDomainService savingsAccountDomainService, final SavingsAccountAssembler savingsAccountAssembler,
+            final AccountTransferDetailAssembler accountTransferDetailAssembler,
+            final AccountTransferDetailRepository accountTransferDetailRepository,
+            final AccountTransferRepository accountTransferRepository) {
         this.savingsAccountAssembler = savingsAccountAssembler;
         this.accountTransferRepository = accountTransferRepository;
         this.accountTransferDetailRepository = accountTransferDetailRepository;
@@ -537,7 +538,7 @@ public class ShareAccountDataSerializer {
     }
 
     private void validateTotalSubsribedShares(final ShareAccount account, final ShareAccountTransaction transaction,
-                                              final DataValidatorBuilder baseDataValidator) {
+            final DataValidatorBuilder baseDataValidator) {
         Long totalSubsribedShares = account.getShareProduct().getSubscribedShares();
         Long requested = Long.valueOf(0);
         if (transaction.isActive() && transaction.isPendingForApprovalTransaction()) {
@@ -832,14 +833,14 @@ public class ShareAccountDataSerializer {
         return actualChanges;
     }
 
-    public Map<String, Object> validateSharesTransfer(JsonCommand jsonCommand, ShareAccount fromAccount,ShareAccount toAccount) {
+    public Map<String, Object> validateSharesTransfer(JsonCommand jsonCommand, ShareAccount fromAccount, ShareAccount toAccount) {
         Map<String, Object> actualChanges = new HashMap<>();
         if (StringUtils.isBlank(jsonCommand.json())) {
             throw new InvalidJsonException();
         }
 
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, jsonCommand.json(),shareTransferParameters);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, jsonCommand.json(), shareTransferParameters);
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("sharesaccount");
         JsonElement element = jsonCommand.parsedJson();
@@ -892,7 +893,6 @@ public class ShareAccountDataSerializer {
             baseDataValidator.reset().parameter(ShareAccountApiConstants.requesteddate_paramname).value(requestedDate)
                     .failWithCodeNoParameterAddedToErrorCode("purchase.redeem.date.cannot.be.before.existing.transactions");
         }
-
 
         if (!dataValidationErrors.isEmpty()) {
             throw new PlatformApiDataValidationException(dataValidationErrors);
@@ -965,8 +965,8 @@ public class ShareAccountDataSerializer {
                 false);
         SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromAccount, fmt,
                 sharePurchase.getPurchasedDate(), sharePurchase.amount(), null, booleanValues, false);
-        final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler.assembleSavingsToSharesTransfer(
-                fromAccount, sharePurchase.getShareAccount());
+        final AccountTransferDetails accountTransferDetails = this.accountTransferDetailAssembler
+                .assembleSavingsToSharesTransfer(fromAccount, sharePurchase.getShareAccount());
         this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
 
         AccountTransferTransaction transferTransaction = AccountTransferTransaction.savingsToSharesTransfer(
@@ -1025,7 +1025,7 @@ public class ShareAccountDataSerializer {
     }
 
     private void updateTotalChargeDerivedForAdditionalSharesReject(final ShareAccount shareAccount,
-                                                                   final ShareAccountTransaction transaction) {
+            final ShareAccountTransaction transaction) {
         Set<ShareAccountChargePaidBy> paidBySet = transaction.getChargesPaidBy();
         if (paidBySet != null && !paidBySet.isEmpty()) {
             for (ShareAccountChargePaidBy chargePaidBy : paidBySet) {
@@ -1128,7 +1128,7 @@ public class ShareAccountDataSerializer {
     }
 
     private void validateRedeemRequest(final ShareAccount account, ShareAccountTransaction redeemTransaction,
-                                       final DataValidatorBuilder baseDataValidator, final List<ApiParameterError> dataValidationErrors) {
+            final DataValidatorBuilder baseDataValidator, final List<ApiParameterError> dataValidationErrors) {
 
         if (account.getTotalApprovedShares() < redeemTransaction.getTotalShares()) {
             baseDataValidator.reset().parameter(ShareAccountApiConstants.requestedshares_paramname)
@@ -1194,21 +1194,21 @@ public class ShareAccountDataSerializer {
         if (periodType != null) {
             switch (periodType) {
                 case INVALID: // It never comes in to this state.
-                    break;
+                break;
                 case DAYS:
                     lockinDate = purchaseDate.plusDays(lockinPeriod);
-                    break;
+                break;
                 case WEEKS:
                     lockinDate = purchaseDate.plusWeeks(lockinPeriod);
-                    break;
+                break;
                 case MONTHS:
                     lockinDate = purchaseDate.plusMonths(lockinPeriod);
-                    break;
+                break;
                 case YEARS:
                     lockinDate = purchaseDate.plusYears(lockinPeriod);
-                    break;
+                break;
                 case WHOLE_TERM: // Never comes in to this state.
-                    break;
+                break;
             }
         }
         return lockinDate;

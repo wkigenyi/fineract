@@ -73,7 +73,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
             final PortfolioAccountType accountType = PortfolioAccountType.fromInt(accountTypeId);
             switch (accountType) {
                 case INVALID:
-                    break;
+                break;
                 case LOAN:
 
                     sql = "select " + this.loanAccountMapper.schema() + " where la.id = ?";
@@ -83,7 +83,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     }
 
                     accountData = this.jdbcTemplate.queryForObject(sql, this.loanAccountMapper, sqlParams);
-                    break;
+                break;
                 case SHARES:
 
                     sql = "select " + this.shareAccountMapper.schema() + " where sa.id = ?";
@@ -93,7 +93,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     }
 
                     accountData = this.jdbcTemplate.queryForObject(sql, this.shareAccountMapper, sqlParams);
-                    break;
+                break;
                 case SAVINGS:
                     sql = "select " + this.savingsAccountMapper.schema() + " where sa.id = ?";
                     if (currencyCode != null) {
@@ -102,7 +102,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                     }
 
                     accountData = this.jdbcTemplate.queryForObject(sql, this.savingsAccountMapper, sqlParams);
-                    break;
+                break;
             }
         } catch (final EmptyResultDataAccessException e) {
             throw new AccountTransferNotFoundException(accountId, e);
@@ -125,7 +125,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
         final PortfolioAccountType accountType = PortfolioAccountType.fromInt(portfolioAccountDTO.getAccountTypeId());
         switch (accountType) {
             case INVALID:
-                break;
+            break;
             case LOAN:
                 sql = "select " + this.loanAccountMapper.schema() + " where ";
                 if (portfolioAccountDTO.getClientId() != null) {
@@ -142,7 +142,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                 }
 
                 accounts = this.jdbcTemplate.query(sql, this.loanAccountMapper, sqlParams.toArray()); // NOSONAR
-                break;
+            break;
             case SAVINGS:
                 sql = "select " + this.savingsAccountMapper.schema() + " where ";
                 if (portfolioAccountDTO.getClientId() != null) {
@@ -173,7 +173,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                 }
 
                 accounts = this.jdbcTemplate.query(sql, this.savingsAccountMapper, sqlParams.toArray()); // NOSONAR
-                break;
+            break;
 
             case SHARES:
                 sql = "select " + this.loanAccountMapper.schema() + " where ";
@@ -191,7 +191,7 @@ public class PortfolioAccountReadPlatformServiceImpl implements PortfolioAccount
                 }
 
                 accounts = this.jdbcTemplate.query(sql, this.loanAccountMapper, sqlParams.toArray()); // NOSONAR
-                break;
+            break;
         }
 
         return accounts;
