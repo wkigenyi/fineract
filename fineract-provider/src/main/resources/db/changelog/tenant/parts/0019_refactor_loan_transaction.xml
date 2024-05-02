@@ -30,6 +30,9 @@
         </addColumn>
     </changeSet>
     <changeSet id="2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="m_loan_transaction" columnName="appuser_id"/>
+        </preConditions>
         <dropColumn tableName="m_loan_transaction">
             <column name="appuser_id"/>
         </dropColumn>
