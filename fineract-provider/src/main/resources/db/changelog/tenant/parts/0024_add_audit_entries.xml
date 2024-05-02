@@ -160,6 +160,11 @@
     </changeSet>
     <!-- Floating rate -->
     <changeSet author="fineract" id="floating-rate-1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_floating_rates" columnName="created_on_utc"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_floating_rates">
             <column name="created_on_utc" type="DATETIME"/>
             <column name="last_modified_on_utc" type="DATETIME"/>
