@@ -102,6 +102,11 @@
         </addColumn>
     </changeSet>
     <changeSet id="client-transaction-2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_client_transaction" columnName="submitted_on_date"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_client_transaction">
             <column name="submitted_on_date" type="DATE" valueComputed="created_date">
                 <constraints nullable="false"/>
