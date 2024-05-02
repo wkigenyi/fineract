@@ -114,6 +114,11 @@
         </addColumn>
     </changeSet>
     <changeSet author="fineract" id="client-transaction-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_client_transaction_created_by"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by" baseTableName="m_client_transaction"
                                  constraintName="FK_client_transaction_created_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
