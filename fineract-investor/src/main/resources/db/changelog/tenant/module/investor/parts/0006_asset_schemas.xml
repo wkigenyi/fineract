@@ -24,6 +24,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_external_asset_owner_transfer" columnName="sub_status"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_external_asset_owner_transfer">
             <column name="sub_status" type="VARCHAR(50)"/>
         </addColumn>
@@ -33,7 +38,7 @@
             <column name="sub_status"/>
         </createIndex>
     </changeSet>
-    <changeSet id="2" author="fineract">
+    <changeSet id="2" author="fineract" failOnError="false">
         <addNotNullConstraint tableName="m_external_asset_owner_transfer" columnName="owner_id" columnDataType="BIGINT"/>
         <addNotNullConstraint tableName="m_external_asset_owner_transfer" columnName="external_id" columnDataType="VARCHAR(100)"/>
         <addNotNullConstraint tableName="m_external_asset_owner_transfer" columnName="status" columnDataType="VARCHAR(50)"/>
@@ -43,7 +48,7 @@
         <addNotNullConstraint tableName="m_external_asset_owner_transfer" columnName="effective_date_to" columnDataType="DATE"/>
     </changeSet>
 
-    <changeSet id="3" author="fineract">
+    <changeSet id="3" author="fineract" failOnError="false">
         <addNotNullConstraint tableName="m_external_asset_owner_transfer_loan_mapping" columnName="owner_transfer_id" columnDataType="BIGINT"/>
     </changeSet>
 </databaseChangeLog>

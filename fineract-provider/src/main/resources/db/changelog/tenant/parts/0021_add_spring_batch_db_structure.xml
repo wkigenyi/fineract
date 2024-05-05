@@ -105,6 +105,11 @@
     </changeSet>
 
     <changeSet author="fineract" id="1-mysql" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="batch_job_instance"/>
+            </not>
+        </preConditions>
         <sql>
             CREATE TABLE BATCH_JOB_INSTANCE  (
                                                  JOB_INSTANCE_ID BIGINT  NOT NULL PRIMARY KEY ,

@@ -39,13 +39,14 @@
             UPDATE batch_custom_job_parameters SET parameter_json = JSON_ARRAY(JSON_OBJECT('parameterName','BusinessDate','parameterValue',parameter_json)) WHERE id IN (SELECT DISTINCT cjp.id FROM (SELECT * FROM batch_custom_job_parameters) cjp WHERE JSON_TYPE(cjp.parameter_json) != 'ARRAY');
         </sql>
     </changeSet>
-    <changeSet author="fineract" id="4">
+    <changeSet author="fineract" id="4" failOnError="false">
+
         <!-- Delete existing rows in batch job execution params that have IS_CATCH_UP key, so that it is not picked up for next loan cob job execution -->
         <delete tableName="BATCH_JOB_EXECUTION_PARAMS">
             <where>KEY_NAME='IS_CATCH_UP'</where>
         </delete>
     </changeSet>
-    <changeSet author="fineract" id="5">
+    <changeSet author="fineract" id="5" failOnError="false">
         <!-- Delete existing rows in job parameter table that have IS_CATCH_UP key, so that it is not picked up for next loan cob job execution -->
         <delete tableName="job_parameters">
             <where>parameter_name='IS_CATCH_UP'</where>

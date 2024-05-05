@@ -26,10 +26,10 @@
         As per Spring Batch 5.0 migration guide
         (https://github.com/spring-projects/spring-batch/wiki/Spring-Batch-5.0-Migration-Guide)
     -->
-    <changeSet author="fineract" id="1">
+    <changeSet author="fineract" id="1" failOnError="false">
         <dropColumn tableName="BATCH_JOB_EXECUTION" columnName="JOB_CONFIGURATION_LOCATION"/>
     </changeSet>
-    <changeSet author="fineract" id="2" context="mysql">
+    <changeSet author="fineract" id="2" context="mysql" failOnError="false">
         <sql>
             UPDATE BATCH_JOB_EXECUTION_PARAMS
             SET STRING_VAL = DATE_FORMAT(DATE_VAL, 'YYYY-MM-DDTHH:MM:SSZ')
@@ -92,7 +92,7 @@
 
         </sql>
     </changeSet>
-    <changeSet author="fineract" id="4" context="mysql">
+    <changeSet author="fineract" id="4" context="mysql" failOnError="false">
         <!--
             org/springframework/batch/core/migration/5.0/migration-mysql.sql
         -->

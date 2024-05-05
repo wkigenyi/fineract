@@ -63,8 +63,12 @@
     </changeSet>
 
     <changeSet author="fineract" id="1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_external_asset_owner_transfer_details"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_external_asset_owner_transfer_details">
-
             <column autoIncrement="true" name="id" type="BIGINT" remarks="Internal ID">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -101,6 +105,11 @@
     </changeSet>
 
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_external_asset_owner_transfer_details_created_by"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by"
                                  baseTableName="m_external_asset_owner_transfer_details"
                                  constraintName="FK_external_asset_owner_transfer_details_created_by" deferrable="false"

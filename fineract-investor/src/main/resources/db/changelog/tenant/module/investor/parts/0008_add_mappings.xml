@@ -25,6 +25,11 @@
 
     <!-- Create table m_external_asset_owner_transfer_journal_entry_mapping -->
     <changeSet author="fineract" id="1" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_external_asset_owner_transfer_journal_entry_mapping"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_external_asset_owner_transfer_journal_entry_mapping">
             <column autoIncrement="true" name="id" type="BIGINT" remarks="Internal ID">
                 <constraints nullable="false" primaryKey="true"/>
@@ -60,6 +65,11 @@
     </changeSet>
 
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_ext_asset_owner_transfer_je_mapping_created_by"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by"
                                  baseTableName="m_external_asset_owner_transfer_journal_entry_mapping"
                                  constraintName="FK_ext_asset_owner_transfer_je_mapping_created_by" deferrable="false"
@@ -89,6 +99,11 @@
 
     <!-- Create table m_external_asset_owner_journal_entry_mapping -->
     <changeSet author="fineract" id="3" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_external_asset_owner_journal_entry_mapping"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_external_asset_owner_journal_entry_mapping">
             <column autoIncrement="true" name="id" type="BIGINT" remarks="Internal ID">
                 <constraints nullable="false" primaryKey="true"/>
@@ -124,6 +139,11 @@
     </changeSet>
 
     <changeSet author="fineract" id="4">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_ext_asset_owner_je_mapping_created_by"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by"
                                  baseTableName="m_external_asset_owner_journal_entry_mapping"
                                  constraintName="FK_ext_asset_owner_je_mapping_created_by" deferrable="false"
@@ -152,6 +172,11 @@
     </changeSet>
     <!-- Add index to m_external_asset_owner_transfer_loan_mapping of loan_id -->
     <changeSet id="5" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="IND_m_ext_asset_owner_transfer_loan_mapping_loan_id"/>
+            </not>
+        </preConditions>
         <createIndex tableName="m_external_asset_owner_transfer_loan_mapping"
                      indexName="IND_m_ext_asset_owner_transfer_loan_mapping_loan_id">
             <column name="loan_id"/>

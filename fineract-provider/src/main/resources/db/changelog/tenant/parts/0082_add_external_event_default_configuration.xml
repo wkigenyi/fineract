@@ -23,6 +23,9 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type="LoanChargeOffPreBusinessEvent"</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="LoanChargeOffPreBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>

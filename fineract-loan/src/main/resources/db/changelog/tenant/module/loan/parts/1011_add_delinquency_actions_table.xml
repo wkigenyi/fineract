@@ -23,6 +23,11 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet id="1" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="m_loan_delinquency_action"/>
+            </not>
+        </preConditions>
         <createTable tableName="m_loan_delinquency_action">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
@@ -46,6 +51,11 @@
         </createTable>
     </changeSet>
     <changeSet id="2" author="fineract" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_loan_delinquency_action" columnName="created_on_utc"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_loan_delinquency_action">
             <column name="created_on_utc" type="DATETIME(6)">
                 <constraints nullable="false"/>
@@ -66,6 +76,11 @@
         </addColumn>
     </changeSet>
     <changeSet id="4" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_m_loan_delinquency_action_loan"/>
+            </not>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="loan_id" baseTableName="m_loan_delinquency_action"
                                  constraintName="FK_m_loan_delinquency_action_loan" deferrable="false"
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
@@ -73,6 +88,11 @@
 
     </changeSet>
     <changeSet id="5" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="m_loan_delinquency_action_loan_id_index"/>
+            </not>
+        </preConditions>
         <createIndex tableName="m_loan_delinquency_action" indexName="m_loan_delinquency_action_loan_id_index">
             <column name="loan_id"/>
         </createIndex>
