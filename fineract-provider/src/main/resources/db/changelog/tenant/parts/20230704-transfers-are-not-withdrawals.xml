@@ -24,7 +24,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.13.xsd">
-    <changeSet id="2023070402" author="wkigenyi">
+    <changeSet id="2023070402" author="wkigenyi" failOnError="false">
         <update tableName="stretchy_report">
             <column name="report_sql" value="SELECT
 sc.savingsId AS savingsId,
