@@ -24,7 +24,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.13.xsd">
-    <changeSet id="2023070402" author="wkigenyi">
+    <changeSet id="2023070402" author="wkigenyi" failOnError="false">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM stretchy_parameter WHERE id = 1023</sqlCheck>
         </preConditions>
