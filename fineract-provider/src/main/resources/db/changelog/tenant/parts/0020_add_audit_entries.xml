@@ -100,11 +100,14 @@
             <column name="last_modified_on_utc" type="TIMESTAMP WITH TIME ZONE"/>
         </addColumn>
     </changeSet>
-    <changeSet id="9" author="fineract">
+    <changeSet id="9" author="fineract" failOnError="false">
         <renameColumn tableName="m_loan_transaction" oldColumnName="createdby_id" newColumnName="created_by" columnDataType="BIGINT"/>
         <renameColumn tableName="m_loan_transaction" oldColumnName="lastmodifiedby_id" newColumnName="last_modified_by" columnDataType="BIGINT"/>
     </changeSet>
     <changeSet author="fineract" id="10">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK_loan_transaction_created_by"/>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by" baseTableName="m_loan_transaction"
                                  constraintName="FK_loan_transaction_created_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
