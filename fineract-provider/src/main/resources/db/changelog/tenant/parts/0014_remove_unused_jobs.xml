@@ -36,6 +36,9 @@
         </delete>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_loan_paid_in_advance"/>
+        </preConditions>
         <dropTable cascadeConstraints="true"
                    tableName="m_loan_paid_in_advance"/>
     </changeSet>
