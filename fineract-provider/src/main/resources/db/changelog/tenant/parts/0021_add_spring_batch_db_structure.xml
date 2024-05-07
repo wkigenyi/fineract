@@ -107,7 +107,7 @@
     <changeSet author="fineract" id="1-mysql" context="mysql">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="batch_job_instance"/>
+                <tableExists tableName="BATCH_JOB_INSTANCE"/>
             </not>
         </preConditions>
         <sql>
