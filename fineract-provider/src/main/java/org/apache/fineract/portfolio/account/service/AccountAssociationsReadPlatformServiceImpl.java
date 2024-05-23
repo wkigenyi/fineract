@@ -106,7 +106,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
             }
 
             if (statusMap.get("loanStatus") != null) {
-                final LoanStatus loanStatus = LoanStatus.fromInt((Integer) statusMap.get("loanStatus"));
+                final LoanStatus loanStatus = LoanStatus.fromInt(((Short) statusMap.get("loanStatus")).intValue());
                 if (loanStatus.isActiveOrAwaitingApprovalOrDisbursal() || loanStatus.isUnderTransfer()) {
                     hasActiveAccount = true;
                     break;
@@ -114,7 +114,7 @@ public class AccountAssociationsReadPlatformServiceImpl implements AccountAssoci
             }
 
             if (statusMap.get("savingsStatus") != null) {
-                final SavingsAccountStatusType saveStatus = SavingsAccountStatusType.fromInt((Integer) statusMap.get("savingsStatus"));
+                final SavingsAccountStatusType saveStatus = SavingsAccountStatusType.fromInt(((Short) statusMap.get("savingsStatus")).intValue());
                 if (saveStatus.isActiveOrAwaitingApprovalOrDisbursal() || saveStatus.isUnderTransfer()) {
                     hasActiveAccount = true;
                     break;
