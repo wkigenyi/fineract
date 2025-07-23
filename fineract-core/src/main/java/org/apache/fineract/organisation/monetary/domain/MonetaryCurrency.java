@@ -76,4 +76,8 @@ public class MonetaryCurrency {
         }
         return currencyData;
     }
+
+    public String getCode() {
+        return this.code;
+    }
 }
