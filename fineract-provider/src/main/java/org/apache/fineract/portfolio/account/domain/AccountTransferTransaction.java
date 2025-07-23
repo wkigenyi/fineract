@@ -29,8 +29,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountTransaction;
 
 @Entity
-@Table(name = "m_account_transfer_transaction")
-public class AccountTransferTransaction extends AbstractPersistableCustom {
+
 @Getter
 public class AccountTransferTransaction extends AbstractPersistableCustom<Long> {
 
