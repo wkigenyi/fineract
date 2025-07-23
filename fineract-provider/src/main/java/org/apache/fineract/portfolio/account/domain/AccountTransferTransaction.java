@@ -21,6 +21,8 @@ package org.apache.fineract.portfolio.account.domain;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import lombok.Getter;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
@@ -29,7 +31,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountTransaction;
 
 @Entity
-
+@Table(name = "m_account_transfer_transaction")
 @Getter
 public class AccountTransferTransaction extends AbstractPersistableCustom<Long> {
 
