@@ -20,6 +20,7 @@ package org.apache.fineract.portfolio.account.jobs.executestandinginstructions;
 
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.jobs.service.JobName;
+import org.apache.fineract.portfolio.account.data.StandingInstructionData;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.account.service.StandingInstructionReadPlatformService;
 import org.springframework.batch.core.Job;
@@ -44,27 +45,53 @@ public class ExecuteStandingInstructionsConfig {
     @Autowired
     private StandingInstructionReadPlatformService standingInstructionReadPlatformService;
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private  JdbcTemplate jdbcTemplate;
     @Autowired
-    private DatabaseSpecificSQLGenerator sqlGenerator;
+    private  DatabaseSpecificSQLGenerator sqlGenerator;
     @Autowired
-    private AccountTransfersWritePlatformService accountTransfersWritePlatformService;
+    private  AccountTransfersWritePlatformService accountTransfersWritePlatformService;
 
     @Bean
-    protected Step executeStandingInstructionsStep() {
+    public StandingInstructionItemReader instructionReader() {
+        return new StandingInstructionItemReader(standingInstructionReadPlatformService);
+    }
+
+    @Bean
+    public StandingInstructionItemProcessor instructionProcessor() {
+        return new StandingInstructionItemProcessor(
+                standingInstructionReadPlatformService,
+                jdbcTemplate,
+                accountTransfersWritePlatformService,
+                sqlGenerator
+        );
+    }
+
+    @Bean
+    public StandingInstructionItemWriter instructionWriter() {
+        return new StandingInstructionItemWriter(accountTransfersWritePlatformService,jdbcTemplate,sqlGenerator);
+    }
+
+    @Bean
+    protected Step executeStandingInstructionsStep(
+            StandingInstructionItemReader reader,
+            StandingInstructionItemProcessor processor,
+            StandingInstructionItemWriter writer) {
+
         return new StepBuilder(JobName.EXECUTE_STANDING_INSTRUCTIONS.name(), jobRepository)
-                .tasklet(executeStandingInstructionsTasklet(), transactionManager).build();
+                .<StandingInstructionData, AccountTransferRequest>chunk(400, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build();
     }
 
     @Bean
-    public Job executeStandingInstructionsJob() {
-        return new JobBuilder(JobName.EXECUTE_STANDING_INSTRUCTIONS.name(), jobRepository).start(executeStandingInstructionsStep())
-                .incrementer(new RunIdIncrementer()).build();
+    public Job executeStandingInstructionsJob(Step executeStandingInstructionsStep) {
+        return new JobBuilder(JobName.EXECUTE_STANDING_INSTRUCTIONS.name(), jobRepository)
+                .start(executeStandingInstructionsStep)
+                .incrementer(new RunIdIncrementer())
+                .build();
     }
 
-    @Bean
-    public ExecuteStandingInstructionsTasklet executeStandingInstructionsTasklet() {
-        return new ExecuteStandingInstructionsTasklet(standingInstructionReadPlatformService, jdbcTemplate, sqlGenerator,
-                accountTransfersWritePlatformService);
-    }
+
 }

@@ -56,9 +56,9 @@ public interface TellerManagementReadPlatformService {
     Collection<CashierData> retrieveCashiersForTellers(Long tellerId);
 
     Page<CashierTransactionData> retrieveCashierTransactions(Long cashierId, boolean includeAllTellers, LocalDate fromDate,
-                                                             LocalDate toDate, String currencyCode, SearchParameters searchParameters);
+            LocalDate toDate, String currencyCode, SearchParameters searchParameters);
 
     CashierTransactionsWithSummaryData retrieveCashierTransactionsWithSummary(Long cashierId, boolean includeAllTellers, LocalDate fromDate,
-                                                                              LocalDate toDate, String currencyCode, SearchParameters searchParameters);
+            LocalDate toDate, String currencyCode, SearchParameters searchParameters);
 
 }

@@ -286,6 +286,7 @@ public final class StandingInstructionData {
 
     }
 
+
     public AccountTransferRecurrenceType getRecurrenceType() {
         return Optional.ofNullable(this.recurrenceType).map(e -> AccountTransferRecurrenceType.fromInt(e.getId().intValue())).orElse(null);
     }
@@ -323,6 +324,10 @@ public final class StandingInstructionData {
             transferType = LoanTransactionType.REPAYMENT.getValue();
         }
         return transferType;
+    }
+
+    public Long getId(){
+        return id;
     }
 
 }
