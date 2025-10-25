@@ -17,20 +17,25 @@
  * under the License.
  */
 package org.apache.fineract.portfolio.account.jobs.executestandinginstructions;
+
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.data.StandingInstructionData;
 
 public class AccountTransferRequest {
+
     private AccountTransferDTO accountTransferDTO;
     private StandingInstructionData instructionData;
-    public AccountTransferRequest(AccountTransferDTO accountTransferDTO,StandingInstructionData instructionData){
+
+    public AccountTransferRequest(AccountTransferDTO accountTransferDTO, StandingInstructionData instructionData) {
         this.accountTransferDTO = accountTransferDTO;
         this.instructionData = instructionData;
     }
-    public Long getInstructionId(){
+
+    public Long getInstructionId() {
         return this.instructionData.getId();
     }
-    public AccountTransferDTO getAccountTransferDTO(){
+
+    public AccountTransferDTO getAccountTransferDTO() {
         return accountTransferDTO;
     }
 }

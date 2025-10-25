@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.account.jobs.executestandinginstructions;
 
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.portfolio.account.data.StandingInstructionData;
 import org.apache.fineract.portfolio.account.domain.StandingInstructionStatus;
@@ -25,16 +26,15 @@ import org.apache.fineract.portfolio.account.service.StandingInstructionReadPlat
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.support.IteratorItemReader;
 
-import java.util.Collection;
-
 @RequiredArgsConstructor
 public class StandingInstructionItemReader implements ItemReader<StandingInstructionData> {
 
     private final StandingInstructionReadPlatformService standingInstructionReadPlatformService;
     private IteratorItemReader<StandingInstructionData> delegate;
+
     @Override
     public StandingInstructionData read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        if(delegate==null){
+        if (delegate == null) {
             Collection<StandingInstructionData> instructionData = standingInstructionReadPlatformService
                     .retrieveAll(StandingInstructionStatus.ACTIVE.getValue());
             this.delegate = new IteratorItemReader<>(instructionData);

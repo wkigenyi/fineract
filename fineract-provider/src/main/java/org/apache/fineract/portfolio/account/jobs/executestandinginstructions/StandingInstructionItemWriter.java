@@ -18,11 +18,12 @@
  */
 package org.apache.fineract.portfolio.account.jobs.executestandinginstructions;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.exception.AbstractPlatformServiceUnavailableException;
 import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
-import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
@@ -30,9 +31,6 @@ import org.apache.log4j.Logger;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class StandingInstructionItemWriter implements ItemWriter<AccountTransferRequest> {
@@ -45,18 +43,23 @@ public class StandingInstructionItemWriter implements ItemWriter<AccountTransfer
     @Override
     public void write(Chunk<? extends AccountTransferRequest> chunk) throws Exception {
         List<Throwable> errors = new ArrayList<>();
-        for(AccountTransferRequest transferRequest:chunk.getItems()){
+        for (AccountTransferRequest transferRequest : chunk.getItems()) {
             Long instructionId = transferRequest.getInstructionId();
             AccountTransferDTO dto = transferRequest.getAccountTransferDTO();
-            boolean transferCompleted = transferAmount(errors,dto,instructionId);
-            if (transferCompleted) {
-                final String updateQuery = "UPDATE m_account_transfer_standing_instructions SET last_run_date = ? where id = ?";
-                jdbcTemplate.update(updateQuery, dto.getTransactionDate(), instructionId);
+            try {
+                boolean transferCompleted = transferAmount(errors, dto, instructionId);
+                if (transferCompleted) {
+                    final String updateQuery = "UPDATE m_account_transfer_standing_instructions SET last_run_date = ? where id = ?";
+                    jdbcTemplate.update(updateQuery, dto.getTransactionDate(), instructionId);
+                }
+            } catch (Throwable e) {
+                LOG.error("Error processing transaction id " + instructionId, e);
             }
+
         }
 
-
     }
+
     private boolean transferAmount(final List<Throwable> errors, final AccountTransferDTO accountTransferDTO, final Long instructionId) {
         boolean transferCompleted = true;
         StringBuilder errorLog = new StringBuilder();

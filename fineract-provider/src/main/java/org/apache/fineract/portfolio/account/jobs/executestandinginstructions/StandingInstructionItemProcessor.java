@@ -18,6 +18,8 @@
  */
 package org.apache.fineract.portfolio.account.jobs.executestandinginstructions;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
@@ -35,10 +37,6 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.ScheduledDa
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class StandingInstructionItemProcessor implements ItemProcessor<StandingInstructionData, AccountTransferRequest> {
@@ -91,13 +89,13 @@ public class StandingInstructionItemProcessor implements ItemProcessor<StandingI
             final SavingsAccount fromSavingsAccount = null;
             final boolean isRegularTransaction = true;
             final boolean isExceptionForBalanceCheck = false;
-            AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount,
-                    data.getFromAccountType(), data.getToAccountType(), data.getFromAccount().getId(), data.getToAccount().getId(),
+            AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transactionDate, transactionAmount, data.getFromAccountType(),
+                    data.getToAccountType(), data.getFromAccount().getId(), data.getToAccount().getId(),
                     data.getName() + " Standing instruction transfer ", null, null, null, null, data.toTransferType(), null, null,
-                    data.getTransferType().getValue(), null, null, ExternalId.empty(), null, null, fromSavingsAccount,
-                    isRegularTransaction, isExceptionForBalanceCheck);
+                    data.getTransferType().getValue(), null, null, ExternalId.empty(), null, null, fromSavingsAccount, isRegularTransaction,
+                    isExceptionForBalanceCheck);
 
-            return new AccountTransferRequest(accountTransferDTO,data);
+            return new AccountTransferRequest(accountTransferDTO, data);
         }
 
         return null;
@@ -108,6 +106,5 @@ public class StandingInstructionItemProcessor implements ItemProcessor<StandingI
         return standingInstructionDuesData.dueDate() != null
                 && !standingInstructionDuesData.dueDate().isAfter(LocalDate.now(DateUtils.getDateTimeZoneOfTenant()));
     }
-
 
 }

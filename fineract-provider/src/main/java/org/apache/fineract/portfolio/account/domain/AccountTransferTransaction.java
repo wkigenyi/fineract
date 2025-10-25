@@ -21,7 +21,6 @@ package org.apache.fineract.portfolio.account.domain;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
 import lombok.Getter;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
