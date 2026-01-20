@@ -26,6 +26,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -67,6 +68,28 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "use_savings", nullable = false)
+    private boolean useSavings = false;
+
+    @Column(name = "redeem_to_savings", nullable = false)
+    private boolean redeemToSavings = false;
+
+    @ManyToOne
+    @JoinColumn(name = "account_transfer_id", nullable = true)
+    private AccountTransferDetails accountTransferDetails;
+
+    @Column(name = "transfer_from_account_id")
+    private Long transferFromAccountId;
+
+    @Column(name = "transfer_to_account_id")
+    private Long transferToAccountId;
+
+    @Column(name = "transfer_from_client_id")
+    private Long transferFromClientId;
+
+    @Column(name = "transfer_to_client_id")
+    private Long transferToClientId;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "shareAccountTransaction", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<ShareAccountChargePaidBy> shareAccountChargesPaid = new HashSet<>();
 
@@ -78,7 +101,8 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.shareAccount = shareAccount;
     }
 
-    public ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue) {
+    public ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares,
+            final BigDecimal shareValue) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -88,8 +112,10 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.amountPaid = new BigDecimal(this.amount.doubleValue());
     }
 
-    private ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue,
-            final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount, final BigDecimal amountPaid) {
+    private ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares,
+            final BigDecimal shareValue,
+            final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount,
+            final BigDecimal amountPaid) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -100,16 +126,60 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.amountPaid = amountPaid;
     }
 
-    public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate, final Long totalShares,
+    public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate,
+            final Long totalShares,
             final BigDecimal shareValue) {
         final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
         final Integer type = PurchasedSharesStatusType.REDEEMED.getValue();
         final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
         BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
-        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null, amountPaid);
+        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null,
+                amountPaid);
     }
 
-    public static ShareAccountTransaction createChargeTransaction(final LocalDate transactionDate, final ShareAccountCharge charge) {
+    public static ShareAccountTransaction createPurchaseTransaction(final LocalDate transactionDate,
+            final Long totalShares,
+            final BigDecimal shareValue) {
+        final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
+        final Integer type = PurchasedSharesStatusType.PURCHASED.getValue();
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
+        BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
+        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null,
+                amountPaid);
+    }
+
+    public static ShareAccountTransaction createTransferOutTransaction(final LocalDate transactionDate,
+            final Long totalShares,
+            final BigDecimal shareValue, final Long transferToAccountId, final Long transferToClientId) {
+        final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
+        final Integer type = PurchasedSharesStatusType.TRANSFERRED_OUT.getValue();
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
+        BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
+        ShareAccountTransaction transaction = new ShareAccountTransaction(transactionDate, totalShares, shareValue,
+                status, type, amount,
+                null, amountPaid);
+        transaction.transferToAccountId = transferToAccountId;
+        transaction.transferToClientId = transferToClientId;
+        return transaction;
+    }
+
+    public static ShareAccountTransaction createTransferInTransaction(final LocalDate transactionDate,
+            final Long totalShares,
+            final BigDecimal shareValue, final Long transferFromAccountId, final Long transferFromClientId) {
+        final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
+        final Integer type = PurchasedSharesStatusType.TRANSFERRED_IN.getValue();
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
+        BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
+        ShareAccountTransaction transaction = new ShareAccountTransaction(transactionDate, totalShares, shareValue,
+                status, type, amount,
+                null, amountPaid);
+        transaction.transferFromAccountId = transferFromAccountId;
+        transaction.transferFromClientId = transferFromClientId;
+        return transaction;
+    }
+
+    public static ShareAccountTransaction createChargeTransaction(final LocalDate transactionDate,
+            final ShareAccountCharge charge) {
         final Long totalShares = null;
         final BigDecimal unitPrice = null;
         final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
@@ -117,7 +187,8 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         BigDecimal amount = charge.percentageOrAmount();
         BigDecimal chargeAmount = null;
         BigDecimal amountPaid = null;
-        return new ShareAccountTransaction(transactionDate, totalShares, unitPrice, status, type, amount, chargeAmount, amountPaid);
+        return new ShareAccountTransaction(transactionDate, totalShares, unitPrice, status, type, amount, chargeAmount,
+                amountPaid);
     }
 
     public LocalDate getPurchasedDate() {
@@ -181,6 +252,36 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
                 && this.type.equals(PurchasedSharesStatusType.PURCHASED.getValue());
     }
 
+    public boolean isTransferOutTransaction() {
+        return this.status.equals(PurchasedSharesStatusType.APPROVED.getValue())
+                && this.type.equals(PurchasedSharesStatusType.TRANSFERRED_OUT.getValue());
+    }
+
+    public boolean isTransferInTransaction() {
+        return this.status.equals(PurchasedSharesStatusType.APPROVED.getValue())
+                && this.type.equals(PurchasedSharesStatusType.TRANSFERRED_IN.getValue());
+    }
+
+    public boolean isPurchaseWithSavings() {
+        return this.useSavings && isPurchasTransaction();
+    }
+
+    public boolean isRedemptionToSavings() {
+        return this.redeemToSavings && isRedeemTransaction();
+    }
+
+    public void setUseSavings(boolean useSavings) {
+        this.useSavings = useSavings;
+    }
+
+    public void setRedeemToSavings(boolean redeemToSavings) {
+        this.redeemToSavings = redeemToSavings;
+    }
+
+    public void linkAccountTransfer(AccountTransferDetails transferDetails) {
+        this.accountTransferDetails = transferDetails;
+    }
+
     public void addShareAccountChargePaidBy(final ShareAccountChargePaidBy chargePaidBy) {
         this.shareAccountChargesPaid.add(chargePaidBy);
     }
@@ -220,11 +321,11 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
     }
 
     public void addAmountPaid(final BigDecimal amountPaid) {
-        if (isRedeemTransaction()) {
+        if (isRedeemTransaction() || isTransferOutTransaction()) {
             this.amountPaid = this.amountPaid.subtract(amountPaid);
-        } else if (isPurchasTransaction() /*
-                                           * || isPurchaseRejectedTransaction()
-                                           */) {
+        } else if (isPurchasTransaction() || isTransferInTransaction() /*
+                                                                        * || isPurchaseRejectedTransaction()
+                                                                        */) {
             this.amountPaid = this.amountPaid.add(amountPaid);
         }
     }

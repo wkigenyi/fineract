@@ -34,6 +34,7 @@ import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
+import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 
 @Entity
 @Table(name = "m_account_transfer_details")
@@ -71,6 +72,14 @@ public class AccountTransferDetails extends AbstractPersistableCustom<Long> {
     @JoinColumn(name = "from_loan_account_id", nullable = true)
     private Loan fromLoanAccount;
 
+    @ManyToOne
+    @JoinColumn(name = "from_share_account_id", nullable = true)
+    private ShareAccount fromShareAccount;
+
+    @ManyToOne
+    @JoinColumn(name = "to_share_account_id", nullable = true)
+    private ShareAccount toShareAccount;
+
     @Column(name = "transfer_type")
     private Integer transferType;
 
@@ -81,42 +90,80 @@ public class AccountTransferDetails extends AbstractPersistableCustom<Long> {
     private AccountTransferStandingInstruction accountTransferStandingInstruction;
 
     public static AccountTransferDetails savingsToSavingsTransfer(final Office fromOffice, final Client fromClient,
-            final SavingsAccount fromSavingsAccount, final Office toOffice, final Client toClient, final SavingsAccount toSavingsAccount,
+            final SavingsAccount fromSavingsAccount, final Office toOffice, final Client toClient,
+            final SavingsAccount toSavingsAccount,
             Integer transferType) {
 
-        return new AccountTransferDetails(fromOffice, fromClient, fromSavingsAccount, null, toOffice, toClient, toSavingsAccount, null,
-                transferType, null);
+        return new AccountTransferDetails(fromOffice, fromClient, fromSavingsAccount, null, null, toOffice, toClient,
+                toSavingsAccount,
+                null, null, transferType, null);
     }
 
     public static AccountTransferDetails savingsToLoanTransfer(final Office fromOffice, final Client fromClient,
-            final SavingsAccount fromSavingsAccount, final Office toOffice, final Client toClient, final Loan toLoanAccount,
+            final SavingsAccount fromSavingsAccount, final Office toOffice, final Client toClient,
+            final Loan toLoanAccount,
             Integer transferType) {
-        return new AccountTransferDetails(fromOffice, fromClient, fromSavingsAccount, null, toOffice, toClient, null, toLoanAccount,
+        return new AccountTransferDetails(fromOffice, fromClient, fromSavingsAccount, null, null, toOffice, toClient,
+                null, toLoanAccount,
+                null, transferType, null);
+    }
+
+    public static AccountTransferDetails loanTosavingsTransfer(final Office fromOffice, final Client fromClient,
+            final Loan fromLoanAccount,
+            final Office toOffice, final Client toClient, final SavingsAccount toSavingsAccount, Integer transferType) {
+        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, null, toOffice, toClient,
+                toSavingsAccount, null, null,
                 transferType, null);
     }
 
-    public static AccountTransferDetails loanTosavingsTransfer(final Office fromOffice, final Client fromClient, final Loan fromLoanAccount,
-            final Office toOffice, final Client toClient, final SavingsAccount toSavingsAccount, Integer transferType) {
-        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, toOffice, toClient, toSavingsAccount, null,
-                transferType, null);
+    public static AccountTransferDetails savingsToShareTransfer(final Office fromOffice, final Client fromClient,
+            final SavingsAccount fromSavingsAccount, final Office toOffice, final Client toClient,
+            final ShareAccount toShareAccount,
+            Integer transferType) {
+        return new AccountTransferDetails(fromOffice, fromClient, fromSavingsAccount, null, null, toOffice, toClient,
+                null, null,
+                toShareAccount, transferType, null);
+    }
+
+    public static AccountTransferDetails shareToSavingsTransfer(final Office fromOffice, final Client fromClient,
+            final ShareAccount fromShareAccount, final Office toOffice, final Client toClient,
+            final SavingsAccount toSavingsAccount,
+            Integer transferType) {
+        return new AccountTransferDetails(fromOffice, fromClient, null, null, fromShareAccount, toOffice, toClient,
+                toSavingsAccount, null,
+                null, transferType, null);
+    }
+
+    public static AccountTransferDetails shareToShareTransfer(final Office fromOffice, final Client fromClient,
+            final ShareAccount fromShareAccount, final Office toOffice, final Client toClient,
+            final ShareAccount toShareAccount,
+            Integer transferType) {
+        return new AccountTransferDetails(fromOffice, fromClient, null, null, fromShareAccount, toOffice, toClient,
+                null, null,
+                toShareAccount, transferType, null);
     }
 
     protected AccountTransferDetails() {
         //
     }
 
-    private AccountTransferDetails(final Office fromOffice, final Client fromClient, final SavingsAccount fromSavingsAccount,
-            final Loan fromLoanAccount, final Office toOffice, final Client toClient, final SavingsAccount toSavingsAccount,
-            final Loan toLoanAccount, final Integer transferType,
+    private AccountTransferDetails(final Office fromOffice, final Client fromClient,
+            final SavingsAccount fromSavingsAccount,
+            final Loan fromLoanAccount, final ShareAccount fromShareAccount, final Office toOffice,
+            final Client toClient,
+            final SavingsAccount toSavingsAccount, final Loan toLoanAccount, final ShareAccount toShareAccount,
+            final Integer transferType,
             final AccountTransferStandingInstruction accountTransferStandingInstruction) {
         this.fromOffice = fromOffice;
         this.fromClient = fromClient;
         this.fromSavingsAccount = fromSavingsAccount;
         this.fromLoanAccount = fromLoanAccount;
+        this.fromShareAccount = fromShareAccount;
         this.toOffice = toOffice;
         this.toClient = toClient;
         this.toSavingsAccount = toSavingsAccount;
         this.toLoanAccount = toLoanAccount;
+        this.toShareAccount = toShareAccount;
         this.transferType = transferType;
         this.accountTransferStandingInstruction = accountTransferStandingInstruction;
     }
@@ -133,7 +180,8 @@ public class AccountTransferDetails extends AbstractPersistableCustom<Long> {
         this.accountTransferTransactions.add(accountTransferTransaction);
     }
 
-    public void updateAccountTransferStandingInstruction(final AccountTransferStandingInstruction accountTransferStandingInstruction) {
+    public void updateAccountTransferStandingInstruction(
+            final AccountTransferStandingInstruction accountTransferStandingInstruction) {
         this.accountTransferStandingInstruction = accountTransferStandingInstruction;
     }
 
@@ -153,10 +201,20 @@ public class AccountTransferDetails extends AbstractPersistableCustom<Long> {
         return AccountTransferType.fromInt(this.transferType);
     }
 
-    public static AccountTransferDetails loanToLoanTransfer(Office fromOffice, Client fromClient, Loan fromLoanAccount, Office toOffice,
+    public static AccountTransferDetails loanToLoanTransfer(Office fromOffice, Client fromClient, Loan fromLoanAccount,
+            Office toOffice,
             Client toClient, Loan toLoanAccount, Integer transferType) {
-        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, toOffice, toClient, null, toLoanAccount,
-                transferType, null);
+        return new AccountTransferDetails(fromOffice, fromClient, null, fromLoanAccount, null, toOffice, toClient, null,
+                toLoanAccount,
+                null, transferType, null);
+    }
+
+    public ShareAccount fromShareAccount() {
+        return this.fromShareAccount;
+    }
+
+    public ShareAccount toShareAccount() {
+        return this.toShareAccount;
     }
 
     public List<AccountTransferTransaction> getAccountTransferTransactions() {

@@ -151,12 +151,17 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     }
 
-    public ShareAccount(final Client client, final ShareProduct shareProduct, final String externalId, final MonetaryCurrency currency,
-            final SavingsAccount savingsAccount, final String accountNo, final Long totalSharesApproved, final Long totalSharesPending,
-            final Set<ShareAccountTransaction> purchasedShares, final Boolean allowDividendCalculationForInactiveClients,
-            final Integer lockinPeriodFrequency, final PeriodFrequencyType lockPeriodType, final Integer minimumActivePeriodFrequency,
+    public ShareAccount(final Client client, final ShareProduct shareProduct, final String externalId,
+            final MonetaryCurrency currency,
+            final SavingsAccount savingsAccount, final String accountNo, final Long totalSharesApproved,
+            final Long totalSharesPending,
+            final Set<ShareAccountTransaction> purchasedShares,
+            final Boolean allowDividendCalculationForInactiveClients,
+            final Integer lockinPeriodFrequency, final PeriodFrequencyType lockPeriodType,
+            final Integer minimumActivePeriodFrequency,
             final PeriodFrequencyType minimumActivePeriodType, Set<ShareAccountCharge> charges, AppUser submittedBy,
-            final LocalDate submittedDate, AppUser approvedBy, LocalDate approvedDate, AppUser rejectedBy, LocalDate rejectedDate,
+            final LocalDate submittedDate, AppUser approvedBy, LocalDate approvedDate, AppUser rejectedBy,
+            LocalDate rejectedDate,
             AppUser activatedBy, LocalDate activatedDate, AppUser closedBy, LocalDate closedDate, AppUser modifiedBy,
             LocalDateTime modifiedDate) {
 
@@ -272,7 +277,8 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
     public boolean setAllowDividendCalculationForInactiveClients(Boolean allowDividendCalculationForInactiveClients) {
         boolean returnValue = false;
         if (this.allowDividendCalculationForInactiveClients == null
-                || !this.allowDividendCalculationForInactiveClients.equals(allowDividendCalculationForInactiveClients)) {
+                || !this.allowDividendCalculationForInactiveClients
+                        .equals(allowDividendCalculationForInactiveClients)) {
             this.allowDividendCalculationForInactiveClients = allowDividendCalculationForInactiveClients;
             returnValue = true;
         }
@@ -300,7 +306,8 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     public boolean setminimumActivePeriod(final Integer minimumActivePeriodFrequency) {
         boolean returnValue = false;
-        if (this.minimumActivePeriodFrequency == null || !this.minimumActivePeriodFrequency.equals(minimumActivePeriodFrequency)) {
+        if (this.minimumActivePeriodFrequency == null
+                || !this.minimumActivePeriodFrequency.equals(minimumActivePeriodFrequency)) {
             this.minimumActivePeriodFrequency = minimumActivePeriodFrequency;
             returnValue = true;
         }
@@ -310,7 +317,8 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
     public boolean setminimumActivePeriodTypeEnum(final PeriodFrequencyType minimumActivePeriodForDividends) {
         boolean returnValue = false;
         if (this.minimumActivePeriodFrequencyType == null
-                || !this.minimumActivePeriodFrequencyType.getValue().equals(minimumActivePeriodForDividends.getValue())) {
+                || !this.minimumActivePeriodFrequencyType.getValue()
+                        .equals(minimumActivePeriodForDividends.getValue())) {
             this.minimumActivePeriodFrequencyType = minimumActivePeriodForDividends;
             returnValue = true;
         }
@@ -368,15 +376,22 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
     public void updateRequestedShares(ShareAccountTransaction purchased) {
         for (ShareAccountTransaction transaction : this.shareAccountTransactions) {
             if (!transaction.isChargeTransaction() && transaction.getId().equals(purchased.getId())) {
-                transaction.update(purchased.getPurchasedDate(), purchased.getTotalShares(), purchased.getPurchasePrice());
+                transaction.update(purchased.getPurchasedDate(), purchased.getTotalShares(),
+                        purchased.getPurchasePrice());
             }
         }
     }
 
     public void addAdditionalPurchasedShares(ShareAccountTransaction purchased) {
         purchased.setShareAccount(this);
-        if (purchased.isRedeemTransaction()) {
+        if (purchased.isRedeemTransaction() || purchased.isTransferOutTransaction()) {
             this.totalSharesApproved -= purchased.getTotalShares();
+        } else if (purchased.isTransferInTransaction()) {
+            if (this.totalSharesApproved == null) {
+                this.totalSharesApproved = purchased.getTotalShares();
+            } else {
+                this.totalSharesApproved += purchased.getTotalShares();
+            }
         } else {
             if (this.totalSharesPending == null) {
                 this.totalSharesPending = purchased.getTotalShares();
@@ -500,8 +515,20 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
         return this.totalSharesApproved;
     }
 
+    public void reduceApprovedShares(Long shares) {
+        if (this.totalSharesApproved == null || this.totalSharesApproved < shares) {
+            // TODO: Throw specific exception - for now relying on validation layer
+            throw new RuntimeException("Insufficient shares approved");
+        }
+        this.totalSharesApproved -= shares;
+    }
+
     public void removePendingShares(Long totalShares) {
         this.totalSharesPending -= totalShares;
+    }
+
+    public SavingsAccount getSavingsAccount() {
+        return this.savingsAccount;
     }
 
     public Long getOfficeId() {

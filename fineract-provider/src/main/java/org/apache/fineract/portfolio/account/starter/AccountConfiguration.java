@@ -57,6 +57,7 @@ import org.apache.fineract.portfolio.savings.domain.GSIMRepositoy;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
+import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountRepositoryWrapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,26 +77,35 @@ public class AccountConfiguration {
     public AccountTransfersReadPlatformService accountTransfersReadPlatformService(JdbcTemplate jdbcTemplate,
             ClientReadPlatformService clientReadPlatformService, OfficeReadPlatformService officeReadPlatformService,
             PortfolioAccountReadPlatformService portfolioAccountReadPlatformService, ColumnValidator columnValidator,
-            DatabaseSpecificSQLGenerator sqlGenerator, AccountTransfersMapper accountTransfersMapper, PaginationHelper paginationHelper,
+            DatabaseSpecificSQLGenerator sqlGenerator, AccountTransfersMapper accountTransfersMapper,
+            PaginationHelper paginationHelper,
             SqlValidator sqlValidator) {
-        return new AccountTransfersReadPlatformServiceImpl(jdbcTemplate, clientReadPlatformService, officeReadPlatformService,
-                portfolioAccountReadPlatformService, columnValidator, sqlGenerator, accountTransfersMapper, paginationHelper, sqlValidator);
+        return new AccountTransfersReadPlatformServiceImpl(jdbcTemplate, clientReadPlatformService,
+                officeReadPlatformService,
+                portfolioAccountReadPlatformService, columnValidator, sqlGenerator, accountTransfersMapper,
+                paginationHelper, sqlValidator);
     }
 
     @Bean
     @ConditionalOnMissingBean(AccountTransfersWritePlatformService.class)
     public AccountTransfersWritePlatformService accountTransfersWritePlatformService(
-            AccountTransfersDataValidator accountTransfersDataValidator, AccountTransferAssembler accountTransferAssembler,
+            AccountTransfersDataValidator accountTransfersDataValidator,
+            AccountTransferAssembler accountTransferAssembler,
             AccountTransferRepository accountTransferRepository, SavingsAccountAssembler savingsAccountAssembler,
             SavingsAccountDomainService savingsAccountDomainService, LoanAssembler loanAccountAssembler,
-            LoanAccountDomainService loanAccountDomainService, SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            AccountTransferDetailRepository accountTransferDetailRepository, LoanReadPlatformService loanReadPlatformService,
-            GSIMRepositoy gsimRepository, ConfigurationDomainService configurationDomainService, ExternalIdFactory externalIdFactory,
-            FineractProperties fineractProperties) {
+            LoanAccountDomainService loanAccountDomainService,
+            SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+            AccountTransferDetailRepository accountTransferDetailRepository,
+            LoanReadPlatformService loanReadPlatformService,
+            GSIMRepositoy gsimRepository, ConfigurationDomainService configurationDomainService,
+            ExternalIdFactory externalIdFactory,
+            FineractProperties fineractProperties, ShareAccountRepositoryWrapper shareAccountRepository) {
         return new AccountTransfersWritePlatformServiceImpl(accountTransfersDataValidator, accountTransferAssembler,
                 accountTransferRepository, savingsAccountAssembler, savingsAccountDomainService, loanAccountAssembler,
-                loanAccountDomainService, savingsAccountWritePlatformService, accountTransferDetailRepository, loanReadPlatformService,
-                gsimRepository, configurationDomainService, externalIdFactory, fineractProperties);
+                loanAccountDomainService, savingsAccountWritePlatformService, accountTransferDetailRepository,
+                loanReadPlatformService,
+                gsimRepository, configurationDomainService, externalIdFactory, fineractProperties,
+                shareAccountRepository);
     }
 
     @Bean
@@ -107,9 +117,12 @@ public class AccountConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(StandingInstructionHistoryReadPlatformService.class)
-    public StandingInstructionHistoryReadPlatformService standingInstructionHistoryReadPlatformService(JdbcTemplate jdbcTemplate,
-            ColumnValidator columnValidator, DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper) {
-        return new StandingInstructionHistoryReadPlatformServiceImpl(jdbcTemplate, columnValidator, sqlGenerator, paginationHelper);
+    public StandingInstructionHistoryReadPlatformService standingInstructionHistoryReadPlatformService(
+            JdbcTemplate jdbcTemplate,
+            ColumnValidator columnValidator, DatabaseSpecificSQLGenerator sqlGenerator,
+            PaginationHelper paginationHelper) {
+        return new StandingInstructionHistoryReadPlatformServiceImpl(jdbcTemplate, columnValidator, sqlGenerator,
+                paginationHelper);
     }
 
     @Bean
@@ -119,16 +132,21 @@ public class AccountConfiguration {
             PortfolioAccountReadPlatformService portfolioAccountReadPlatformService,
             DropdownReadPlatformService dropdownReadPlatformService, ColumnValidator columnValidator,
             DatabaseSpecificSQLGenerator sqlGenerator, PaginationHelper paginationHelper) {
-        return new StandingInstructionReadPlatformServiceImpl(jdbcTemplate, clientReadPlatformService, officeReadPlatformService,
-                portfolioAccountReadPlatformService, dropdownReadPlatformService, columnValidator, sqlGenerator, paginationHelper);
+        return new StandingInstructionReadPlatformServiceImpl(jdbcTemplate, clientReadPlatformService,
+                officeReadPlatformService,
+                portfolioAccountReadPlatformService, dropdownReadPlatformService, columnValidator, sqlGenerator,
+                paginationHelper);
     }
 
     @Bean
     @ConditionalOnMissingBean(StandingInstructionWritePlatformService.class)
     public StandingInstructionWritePlatformService standingInstructionWritePlatformService(
-            StandingInstructionDataValidator standingInstructionDataValidator, StandingInstructionAssembler standingInstructionAssembler,
-            AccountTransferDetailRepository accountTransferDetailRepository, StandingInstructionRepository standingInstructionRepository) {
-        return new StandingInstructionWritePlatformServiceImpl(standingInstructionDataValidator, standingInstructionAssembler,
+            StandingInstructionDataValidator standingInstructionDataValidator,
+            StandingInstructionAssembler standingInstructionAssembler,
+            AccountTransferDetailRepository accountTransferDetailRepository,
+            StandingInstructionRepository standingInstructionRepository) {
+        return new StandingInstructionWritePlatformServiceImpl(standingInstructionDataValidator,
+                standingInstructionAssembler,
                 accountTransferDetailRepository, standingInstructionRepository);
     }
 }
