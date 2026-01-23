@@ -114,16 +114,16 @@ public class ShareAccountsConfiguration {
 
     @Bean
     public ShareAccountWritePlatformService shareAccountWritePlatformService(ShareAccountDataSerializer accountDataSerializer,
-                                                                             ShareAccountRepositoryWrapper shareAccountRepository, ShareProductRepositoryWrapper shareProductRepository,
-                                                                             AccountNumberGenerator accountNumberGenerator, AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-                                                                             JournalEntryWritePlatformService journalEntryWritePlatformService, NoteRepository noteRepository,
-                                                                             BusinessEventNotifierService businessEventNotifierService,
-                                                                             AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-                                                                             SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-                                                                             SavingsAccountTransactionRepository savingsAccountTransactionRepository) {  // ADD THIS
+            ShareAccountRepositoryWrapper shareAccountRepository, ShareProductRepositoryWrapper shareProductRepository,
+            AccountNumberGenerator accountNumberGenerator, AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+            JournalEntryWritePlatformService journalEntryWritePlatformService, NoteRepository noteRepository,
+            BusinessEventNotifierService businessEventNotifierService,
+            AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+            SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+            SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
         return new ShareAccountWritePlatformServiceJpaRepositoryImpl(accountDataSerializer, shareAccountRepository, shareProductRepository,
                 accountNumberGenerator, accountNumberFormatRepository, journalEntryWritePlatformService, noteRepository,
                 businessEventNotifierService, accountTransfersWritePlatformService, savingsAccountWritePlatformService,
-                savingsAccountTransactionRepository);  // ADD THIS
+                savingsAccountTransactionRepository);
     }
 }

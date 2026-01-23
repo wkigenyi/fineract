@@ -540,6 +540,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         return fromAccountType.isSavingsAccount() && toAccountType.isSharesAccount();
     }
 
+    private boolean isSavingsToSharesAccountTransfer(final PortfolioAccountType fromAccountType,
+            final PortfolioAccountType toAccountType) {
+        return fromAccountType.isSavingsAccount() && toAccountType.isSharesAccount();
+    }
+
     @Override
     @Transactional
     public CommandProcessingResult refundByTransfer(JsonCommand command) {

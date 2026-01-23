@@ -1288,7 +1288,6 @@ public class ShareAccountIntegrationTests {
         map.put("amount", amount);
         return map;
     }
-
     private void updateShareAccountWithInitialData(Integer shareAccountId, Integer requestedShares, String applicationDate) {
         Map<String, Object> shareAccountDataForUpdate = new HashMap<>();
         shareAccountDataForUpdate.put("requestedShares", requestedShares);
