@@ -55,8 +55,8 @@ public class ShareAccountIntegrationTests {
         Utils.initializeRESTAssured();
         this.requestSpec = new RequestSpecBuilder().setContentType(ContentType.JSON).build();
         this.requestSpec.header("Authorization", "Basic " + Utils.loginIntoServerAndGetBase64EncodedAuthenticationKey());
-        this.requestSpec.header("Fineract-Platform-TenantId", "default");
         this.responseSpec = new ResponseSpecBuilder().expectStatusCode(200).build();
+        this.shareProductHelper = new ShareProductHelper();
     }
 
     @Test
@@ -1423,5 +1423,155 @@ public class ShareAccountIntegrationTests {
         Assertions.assertEquals("shareAccountStatusType.active", String.valueOf(statusMap.get("code")));
 
         return shareAccountId;
+    }
+    @Test
+    public void testShareAccountApprovalWithSavings() {
+        final SavingsAccountHelper savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        final Integer productId = createShareProduct();
+        final Integer savingsAccountId = savingsAccountHelper.openSavingsAccount(this.requestSpec, this.responseSpec, clientId, "1000");
+
+        // Deposit some funds into savings
+        savingsAccountHelper.depositToSavingsAccount(savingsAccountId, "1500", "01 January 2023", "resourceId");
+
+        final String shareAccountCreateJson = new ShareAccountHelper().withClientId(clientId.toString()).withProductId(productId.toString())
+                .withSavingsAccountId(savingsAccountId.toString()).withRequestedShares("10").withSubmittedDate("01 January 2023")
+                .withApplicationDate("01 January 2023").withUseSavings(true).build();
+
+        final Integer shareAccountId = ShareAccountTransactionHelper.createShareAccount(shareAccountCreateJson, this.requestSpec,
+                this.responseSpec);
+        Assertions.assertNotNull(shareAccountId);
+
+        // Verify savings account balance: 2500 total, but 1000 should be on hold (10 shares * 100)
+        Map<String, Object> savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        Float summaryBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("accountBalance");
+        Float onHoldBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("onHoldBalance");
+        Assertions.assertEquals(2500.0f, summaryBalance);
+        Assertions.assertEquals(1000.0f, onHoldBalance);
+
+        // Try to withdraw more than available (2500 - 1000 = 1500 available)
+        final ResponseSpecification errorResponseSpec = new ResponseSpecBuilder().expectStatusCode(403).build();
+        final SavingsAccountHelper errorSavingsHelper = new SavingsAccountHelper(this.requestSpec, errorResponseSpec);
+        final Map<String, Object> withdrawalErrorMap = (Map<String, Object>) errorSavingsHelper.withdrawalFromSavingsAccount(savingsAccountId,
+                "1600", "01 January 2023", "");
+        final String withdrawalError = (String) ((List<Map<String, Object>>) withdrawalErrorMap.get("errors")).get(0).get("userMessageGlobalisationCode");
+        Assertions.assertEquals("error.msg.savingsaccount.transaction.amount.exceeds.available.balance", withdrawalError);
+
+        final String shareAccountApproveJson = getShareAccountApproveJson("01 January 2023");
+        final Integer approvedShareAccountId = ShareAccountTransactionHelper.postCommand("approve", shareAccountId,
+                shareAccountApproveJson, this.requestSpec, this.responseSpec);
+        Assertions.assertEquals(shareAccountId, approvedShareAccountId);
+
+        // Verify savings account balance decreased and hold released
+        savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        summaryBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("accountBalance");
+        onHoldBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("onHoldBalance");
+        // Balance should be 1500 - 1000 = 500. Hold should be 0.
+        Assertions.assertEquals(500.0f, summaryBalance);
+        Assertions.assertEquals(0.0f, onHoldBalance);
+    }
+
+    @Test
+    public void testAdditionalSharePurchaseWithSavings() {
+        final SavingsAccountHelper savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        final Integer productId = createShareProduct();
+        final Integer savingsAccountId = savingsAccountHelper.openSavingsAccount(this.requestSpec, this.responseSpec, clientId, "1000");
+
+        // Deposit some funds into savings
+        savingsAccountHelper.depositToSavingsAccount(savingsAccountId, "2000", "01 January 2023", "resourceId");
+
+        final String shareAccountCreateJson = new ShareAccountHelper().withClientId(clientId.toString()).withProductId(productId.toString())
+                .withSavingsAccountId(savingsAccountId.toString()).withRequestedShares("10").withSubmittedDate("01 January 2023")
+                .withApplicationDate("01 January 2023").withUseSavings(true).build();
+
+        final Integer shareAccountId = ShareAccountTransactionHelper.createShareAccount(shareAccountCreateJson, this.requestSpec,
+                this.responseSpec);
+        Assertions.assertNotNull(shareAccountId);
+
+        final String shareAccountApproveJson = getShareAccountApproveJson("01 January 2023");
+        ShareAccountTransactionHelper.postCommand("approve", shareAccountId, shareAccountApproveJson, this.requestSpec, this.responseSpec);
+        ShareAccountTransactionHelper.postCommand("activate", shareAccountId, getShareAccountActivateJson("01 January 2023"),
+                this.requestSpec, this.responseSpec);
+
+        // Apply for additional shares with useSavings = true
+        final String additionalSharesJson = new ShareAccountHelper().withRequestedShares("5").withRequestedDate("02 January 2023")
+                .withUseSavings(true).build();
+
+        final Integer transactionId = ShareAccountTransactionHelper.postCommand("applyAdditionalShares", shareAccountId,
+                additionalSharesJson, this.requestSpec, new ResponseSpecBuilder().expectStatusCode(200).build());
+        Assertions.assertNotNull(transactionId);
+
+        // Verify savings account onHoldBalance increased
+        Map<String, Object> savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        Float onHoldBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("onHoldBalance");
+        // Initial purchase 10 shares * 100 = 1000. But after activation it should be released and transferred.
+        // Wait, after activation it's transferred.
+        // Let's check balance. Initial 2000. After purchase 1000.
+        // Additional 5 shares * 100 = 500 should be on hold.
+        Assertions.assertEquals(500.0f, onHoldBalance);
+    }
+
+    @Test
+    public void testShareAccountRejectionWithSavings() {
+        final SavingsAccountHelper savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        final Integer productId = createShareProduct();
+        final Integer savingsAccountId = savingsAccountHelper.openSavingsAccount(this.requestSpec, this.responseSpec, clientId, "1000");
+
+        // Deposit some funds into savings
+        savingsAccountHelper.depositToSavingsAccount(savingsAccountId, "1500", "01 January 2023", "resourceId");
+
+        final String shareAccountCreateJson = new ShareAccountHelper().withClientId(clientId.toString()).withProductId(productId.toString())
+                .withSavingsAccountId(savingsAccountId.toString()).withRequestedShares("10").withSubmittedDate("01 January 2023")
+                .withApplicationDate("01 January 2023").withUseSavings(true).build();
+
+        final Integer shareAccountId = ShareAccountTransactionHelper.createShareAccount(shareAccountCreateJson, this.requestSpec,
+                this.responseSpec);
+        Assertions.assertNotNull(shareAccountId);
+
+        // Verify savings account balance: 1000 should be on hold
+        Map<String, Object> savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        Float onHoldBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("onHoldBalance");
+        Assertions.assertEquals(1000.0f, onHoldBalance);
+
+        final String shareAccountRejectJson = getShareAccountRejectJson("01 January 2023");
+        final Integer rejectedShareAccountId = ShareAccountTransactionHelper.postCommand("reject", shareAccountId,
+                shareAccountRejectJson, this.requestSpec, this.responseSpec);
+        Assertions.assertEquals(shareAccountId, rejectedShareAccountId);
+
+        // Verify savings account hold released
+        savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        Float summaryBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("accountBalance");
+        onHoldBalance = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("onHoldBalance");
+        // Balance should be 1500. Hold should be 0.
+        Assertions.assertEquals(1500.0f, summaryBalance);
+        Assertions.assertEquals(0.0f, onHoldBalance);
+    }
+
+    public static String getShareAccountApproveJson(final String approvedDate) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("approvedDate", approvedDate);
+        map.put("note", "Share Account Approved");
+        return new Gson().toJson(map);
+    }
+
+    public static String getShareAccountRejectJson(final String rejectedDate) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("rejectedDate", rejectedDate);
+        map.put("note", "Share Account Rejected");
+        return new Gson().toJson(map);
+    }
+
+    public static String getShareAccountActivateJson(final String activatedDate) {
+        final Map<String, Object> map = new HashMap<>();
+        map.put("locale", "en_GB");
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("activatedDate", activatedDate);
+        return new Gson().toJson(map);
     }
 }

@@ -67,6 +67,12 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "use_savings", nullable = true)
+    private Boolean useSavings;
+
+    @Column(name = "savings_transaction_id", nullable = true)
+    private Long savingsTransactionId;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "shareAccountTransaction", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<ShareAccountChargePaidBy> shareAccountChargesPaid = new HashSet<>();
 
@@ -78,7 +84,8 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.shareAccount = shareAccount;
     }
 
-    public ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue) {
+    public ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue,
+            final Boolean useSavings) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -86,10 +93,12 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.type = PurchasedSharesStatusType.PURCHASED.getValue();
         this.amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
         this.amountPaid = new BigDecimal(this.amount.doubleValue());
+        this.useSavings = useSavings;
     }
 
     private ShareAccountTransaction(final LocalDate transactionDate, final Long totalShares, final BigDecimal shareValue,
-            final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount, final BigDecimal amountPaid) {
+            final Integer status, final Integer type, final BigDecimal amount, final BigDecimal chargeAmount, final BigDecimal amountPaid,
+            final Boolean useSavings) {
         this.transactionDate = transactionDate;
         this.totalShares = totalShares;
         this.shareValue = shareValue;
@@ -98,6 +107,7 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.amount = amount;
         this.chargeAmount = chargeAmount;
         this.amountPaid = amountPaid;
+        this.useSavings = useSavings;
     }
 
     public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate, final Long totalShares,
@@ -106,7 +116,7 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         final Integer type = PurchasedSharesStatusType.REDEEMED.getValue();
         final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
         BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
-        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null, amountPaid);
+        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null, amountPaid, null);
     }
 
     public static ShareAccountTransaction createChargeTransaction(final LocalDate transactionDate, final ShareAccountCharge charge) {
@@ -117,7 +127,11 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         BigDecimal amount = charge.percentageOrAmount();
         BigDecimal chargeAmount = null;
         BigDecimal amountPaid = null;
-        return new ShareAccountTransaction(transactionDate, totalShares, unitPrice, status, type, amount, chargeAmount, amountPaid);
+        return new ShareAccountTransaction(transactionDate, totalShares, unitPrice, status, type, amount, chargeAmount, amountPaid, null);
+    }
+
+    public Boolean isUsingSavings() {
+        return this.useSavings != null && this.useSavings;
     }
 
     public LocalDate getPurchasedDate() {
@@ -139,6 +153,14 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
         this.amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
         this.chargeAmount = BigDecimal.ZERO;
         this.status = PurchasedSharesStatusType.APPLIED.getValue();
+    }
+
+    public void updateSavingsTransactionId(final Long savingsTransactionId) {
+        this.savingsTransactionId = savingsTransactionId;
+    }
+
+    public Long getSavingsTransactionId() {
+        return this.savingsTransactionId;
     }
 
     public void approve() {

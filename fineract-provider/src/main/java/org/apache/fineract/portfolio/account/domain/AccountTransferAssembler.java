@@ -31,6 +31,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -159,4 +160,19 @@ public class AccountTransferAssembler {
         return accountTransferDetails;
     }
 
+    public AccountTransferDetails assembleSavingsToSharesTransfer(final AccountTransferDTO accountTransferDTO,
+            final SavingsAccount fromSavingsAccount, final SavingsAccountTransaction withdrawal) {
+        final Money transactionMonetaryAmount = Money.of(fromSavingsAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
+        AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
+        if (accountTransferDetails == null) {
+            final ShareAccount toShareAccount = this.accountTransferDetailAssembler.getShareAccountRepository()
+                    .findOneWithNotFoundDetection(accountTransferDTO.getToAccountId());
+            accountTransferDetails = this.accountTransferDetailAssembler.assembleSavingsToSharesTransfer(fromSavingsAccount, toShareAccount,
+                    accountTransferDTO.getTransferType());
+        }
+        AccountTransferTransaction accountTransferTransaction = AccountTransferTransaction.savingsToSharesTransfer(accountTransferDetails,
+                withdrawal, accountTransferDTO.getTransactionDate(), transactionMonetaryAmount, accountTransferDTO.getDescription());
+        accountTransferDetails.addAccountTransferTransaction(accountTransferTransaction);
+        return accountTransferDetails;
+    }
 }

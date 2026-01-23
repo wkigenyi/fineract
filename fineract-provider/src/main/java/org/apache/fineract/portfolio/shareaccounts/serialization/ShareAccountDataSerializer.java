@@ -106,6 +106,11 @@ public class ShareAccountDataSerializer {
 
     private static final Set<String> addtionalSharesParameters = new HashSet<>(Arrays.asList(ShareAccountApiConstants.locale_paramname,
             ShareAccountApiConstants.requesteddate_paramname, ShareAccountApiConstants.requestedshares_paramname,
+            ShareAccountApiConstants.purchasedprice_paramname, ShareAccountApiConstants.dateformat_paramname,
+            ShareAccountApiConstants.use_savings_paramname));
+
+    private static final Set<String> redeemSharesParameters = new HashSet<>(Arrays.asList(ShareAccountApiConstants.locale_paramname,
+            ShareAccountApiConstants.requesteddate_paramname, ShareAccountApiConstants.requestedshares_paramname,
             ShareAccountApiConstants.purchasedprice_paramname, ShareAccountApiConstants.dateformat_paramname));
 
     @Autowired
@@ -214,7 +219,8 @@ public class ShareAccountDataSerializer {
         Long approvedShares = null;
         Long pendingShares = requestedShares;
         BigDecimal unitPrice = shareProduct.deriveMarketPrice(applicationDate);
-        ShareAccountTransaction transaction = new ShareAccountTransaction(applicationDate, requestedShares, unitPrice);
+        Boolean useSavings = this.fromApiJsonHelper.extractBooleanNamed(ShareAccountApiConstants.use_savings_paramname, element);
+        ShareAccountTransaction transaction = new ShareAccountTransaction(applicationDate, requestedShares, unitPrice, useSavings);
         Set<ShareAccountTransaction> sharesPurchased = new HashSet<>();
         sharesPurchased.add(transaction);
 
@@ -333,7 +339,7 @@ public class ShareAccountDataSerializer {
                     if (!transaction.isChargeTransaction()) {
                         existingApplicationDate = transaction.getPurchasedDate();
                         ShareAccountTransaction newtransaction = new ShareAccountTransaction(transaction.getPurchasedDate(),
-                                transaction.getTotalShares(), transaction.getPurchasePrice());
+                                transaction.getTotalShares(), transaction.getPurchasePrice(), transaction.isUsingSavings());
                         purchaseTransactionsList.add(newtransaction);
                     }
                 }
@@ -366,7 +372,8 @@ public class ShareAccountDataSerializer {
                 applicationDate = existingApplicationDate;
             }
             BigDecimal unitPrice = shareProduct.deriveMarketPrice(applicationDate);
-            ShareAccountTransaction transaction = new ShareAccountTransaction(applicationDate, requestedShares, unitPrice);
+            Boolean useSavings = this.fromApiJsonHelper.extractBooleanNamed(ShareAccountApiConstants.use_savings_paramname, element);
+            ShareAccountTransaction transaction = new ShareAccountTransaction(applicationDate, requestedShares, unitPrice, useSavings);
             purchaseTransactionsList.add(transaction);
             actualChanges.put(ShareAccountApiConstants.requestedshares_paramname, "Transaction");
 
@@ -720,7 +727,8 @@ public class ShareAccountDataSerializer {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
         final BigDecimal unitPrice = shareProduct.deriveMarketPrice(requestedDate);
-        ShareAccountTransaction purchaseTransaction = new ShareAccountTransaction(requestedDate, sharesRequested, unitPrice);
+        Boolean useSavings = this.fromApiJsonHelper.extractBooleanNamed(ShareAccountApiConstants.use_savings_paramname, element);
+        ShareAccountTransaction purchaseTransaction = new ShareAccountTransaction(requestedDate, sharesRequested, unitPrice, useSavings);
         account.addAdditionalPurchasedShares(purchaseTransaction);
         handleAdditionalSharesChargeTransactions(account, purchaseTransaction);
         actualChanges.put(ShareAccountApiConstants.additionalshares_paramname, purchaseTransaction);
@@ -865,7 +873,7 @@ public class ShareAccountDataSerializer {
             throw new InvalidJsonException();
         }
         final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
-        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, jsonCommand.json(), addtionalSharesParameters);
+        this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, jsonCommand.json(), redeemSharesParameters);
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("sharesaccount");
         JsonElement element = jsonCommand.parsedJson();

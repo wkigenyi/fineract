@@ -98,6 +98,8 @@ public interface ShareAccountApiConstants {
 
     String closeddate_paramname = "closedDate";
 
+    String use_savings_paramname = "useSavings";
+
     String shareEntityType = "share";
 
     Set<String> supportedParameters = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(locale_paramname, dateformat_paramname,
@@ -105,6 +107,7 @@ public interface ShareAccountApiConstants {
             currency_paramname, digitsafterdecimal_paramname, inmultiplesof_paramname, requestedshares_paramname,
             savingsaccountid_paramname, lockinperiod_paramname, lockperiodfrequencytype_paramname, minimumactiveperiod_paramname,
             minimumactiveperiodfrequencytype_paramname, allowdividendcalculationforinactiveclients_paramname, charges_paramname,
-            applicationdate_param, purchaseddate_paramname, numberofshares_paramname, purchasedprice_paramname)));
+            applicationdate_param, purchaseddate_paramname, numberofshares_paramname, purchasedprice_paramname,
+            use_savings_paramname)));
 
 }

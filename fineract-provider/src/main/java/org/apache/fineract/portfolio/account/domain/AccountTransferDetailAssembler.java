@@ -38,6 +38,8 @@ import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
+import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountRepositoryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,16 +51,19 @@ public class AccountTransferDetailAssembler {
     private final SavingsAccountAssembler savingsAccountAssembler;
     private final FromJsonHelper fromApiJsonHelper;
     private final LoanAssembler loanAccountAssembler;
+    private final ShareAccountRepositoryWrapper shareAccountRepository;
 
     @Autowired
     public AccountTransferDetailAssembler(final ClientRepositoryWrapper clientRepository,
             final OfficeRepositoryWrapper officeRepositoryWrapper, final SavingsAccountAssembler savingsAccountAssembler,
-            final FromJsonHelper fromApiJsonHelper, final LoanAssembler loanAccountAssembler) {
+            final FromJsonHelper fromApiJsonHelper, final LoanAssembler loanAccountAssembler,
+            final ShareAccountRepositoryWrapper shareAccountRepository) {
         this.clientRepository = clientRepository;
         this.officeRepositoryWrapper = officeRepositoryWrapper;
         this.savingsAccountAssembler = savingsAccountAssembler;
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.loanAccountAssembler = loanAccountAssembler;
+        this.shareAccountRepository = shareAccountRepository;
     }
 
     public AccountTransferDetails assembleSavingsToSavingsTransfer(final JsonCommand command) {
@@ -210,5 +215,20 @@ public class AccountTransferDetailAssembler {
 
         return AccountTransferDetails.loanToLoanTransfer(fromOffice, fromClient, fromLoanAccount, toOffice, toClient, toLoanAccount,
                 transferType);
+    }
+
+    public AccountTransferDetails assembleSavingsToSharesTransfer(SavingsAccount fromSavingsAccount, ShareAccount toShareAccount,
+            Integer transferType) {
+        final Office fromOffice = fromSavingsAccount.office();
+        final Client fromClient = fromSavingsAccount.getClient();
+        final Office toOffice = toShareAccount.getOffice();
+        final Client toClient = toShareAccount.getClient();
+
+        return AccountTransferDetails.savingsToSharesTransfer(fromOffice, fromClient, fromSavingsAccount, toOffice, toClient, toShareAccount,
+                transferType);
+    }
+
+    public ShareAccountRepositoryWrapper getShareAccountRepository() {
+        return this.shareAccountRepository;
     }
 }

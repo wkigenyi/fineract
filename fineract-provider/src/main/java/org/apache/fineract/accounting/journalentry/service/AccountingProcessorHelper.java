@@ -287,6 +287,7 @@ public class AccountingProcessorHelper {
             final BigDecimal amount = (BigDecimal) map.get("amount");
             final BigDecimal chargeAmount = (BigDecimal) map.get("chargeAmount");
             final Long paymentTypeId = (Long) map.get("paymentTypeId");
+            final boolean useSavings = map.get("useSavings") != null && (Boolean) map.get("useSavings");
 
             final List<ChargePaymentDTO> feePayments = new ArrayList<>();
             // extract charge payment details (if exists)
@@ -302,7 +303,7 @@ public class AccountingProcessorHelper {
                 }
             }
             final SharesTransactionDTO transaction = new SharesTransactionDTO(transactionOfficeId, paymentTypeId, transactionId,
-                    transactionDate, transactionType, transactionStatus, amount, chargeAmount, feePayments);
+                    transactionDate, transactionType, transactionStatus, amount, chargeAmount, feePayments, useSavings);
 
             newTransactions.add(transaction);
 

@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.shareaccounts.service;
 import jakarta.persistence.PersistenceException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
@@ -38,14 +40,19 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.ErrorHandler;
+import org.apache.fineract.infrastructure.core.serialization.GoogleGsonSerializerHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountApproveBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountCreateBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
+import org.apache.fineract.portfolio.account.PortfolioAccountType;
+import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
 import org.apache.fineract.portfolio.account.service.AccountNumberGenerator;
+import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.accounts.constants.ShareAccountApiConstants;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountChargePaidBy;
@@ -75,6 +82,8 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final NoteRepository noteRepository;
 
     private final BusinessEventNotifierService businessEventNotifierService;
+    private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
+    private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
 
     @Override
     public CommandProcessingResult createShareAccount(JsonCommand jsonCommand) {
@@ -82,6 +91,15 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             ShareAccount account = this.accountDataSerializer.validateAndCreate(jsonCommand);
             this.shareAccountRepository.saveAndFlush(account);
             generateAccountNumber(account);
+
+            // Hold funds if useSavings is true
+            for (ShareAccountTransaction transaction : account.getShareAccountTransactions()) {
+                if (transaction.isUsingSavings()) {
+                    holdFunds(account, transaction, jsonCommand);
+                    this.shareAccountRepository.saveAndFlush(account);
+                }
+            }
+
             journalEntryWritePlatformService.createJournalEntriesForShares(
                     populateJournalEntries(account, account.getPendingForApprovalSharePurchaseTransactions()));
 
@@ -132,6 +150,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             final ShareAccountTransactionEnumData typeEnum = new ShareAccountTransactionEnumData(type.longValue(), null, null);
             transactionDto.put("status", statusEnum);
             transactionDto.put("type", typeEnum);
+            transactionDto.put("useSavings", transaction.isUsingSavings());
             if (transaction.isPurchaseRejectedTransaction() || transaction.isRedeemTransaction()) {
                 BigDecimal amount = transaction.amount();
                 if (transaction.chargeAmount() != null) {
@@ -207,11 +226,17 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 transaction = (ShareAccountTransaction) changes.get(ShareAccountApiConstants.additionalshares_paramname);
                 transaction = account.getShareAccountTransaction(transaction);
                 if (transaction != null) {
+                    if (transaction.isUsingSavings()) {
+                        holdFunds(account, transaction, jsonCommand);
+                        this.shareAccountRepository.saveAndFlush(account);
+                        transaction = account.getShareAccountTransaction(transaction);
+                    }
                     changes.clear();
                     changes.put(ShareAccountApiConstants.additionalshares_paramname, transaction.getId());
                     Set<ShareAccountTransaction> transactions = new HashSet<>();
                     transactions.add(transaction);
                     this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
+                    this.shareAccountRepository.saveAndFlush(account);
                 }
             }
 
@@ -249,6 +274,17 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 if (transaction.isActive() && transaction.isPurchasTransaction()) {
                     journalTransactions.add(transaction);
                     totalSubsribedShares += transaction.getTotalShares();
+                    if (transaction.isUsingSavings()) {
+                        if (transaction.getSavingsTransactionId() != null) {
+                            this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
+                                    transaction.getSavingsTransactionId());
+                        }
+                        final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transaction.getPurchasedDate(),
+                                transaction.amount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SHARES,
+                                account.getSavingsAccount().getId(), account.getId(), "Share Purchase", null, null, null, null,
+                                org.apache.fineract.infrastructure.core.domain.ExternalId.empty(), null, null);
+                        this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+                    }
                 }
             }
             ShareProduct shareProduct = account.getShareProduct();
@@ -276,7 +312,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
             Map<String, Object> changes = this.accountDataSerializer.validateAndReject(jsonCommand, account);
             if (!changes.isEmpty()) {
-                this.shareAccountRepository.save(account);
+                this.shareAccountRepository.saveAndFlush(account);
                 final String noteText = jsonCommand.stringValueOfParameterNamed("note");
                 if (StringUtils.isNotBlank(noteText)) {
                     final Note note = Note.shareNote(account, noteText);
@@ -289,6 +325,10 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             for (ShareAccountTransaction transaction : transactions) {
                 if (transaction.isActive() && !transaction.isChargeTransaction()) {
                     journalTransactions.add(transaction);
+                    if (transaction.isUsingSavings() && transaction.getSavingsTransactionId() != null) {
+                        this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
+                                transaction.getSavingsTransactionId());
+                    }
                 }
             }
 
@@ -371,7 +411,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
             Map<String, Object> changes = this.accountDataSerializer.validateAndApproveAddtionalShares(jsonCommand, account);
             if (!changes.isEmpty()) {
-                this.shareAccountRepository.save(account);
+                this.shareAccountRepository.saveAndFlush(account);
                 ArrayList<Long> transactionIds = (ArrayList<Long>) changes.get(ShareAccountApiConstants.requestedshares_paramname);
                 Long totalSubscribedShares = Long.valueOf(0);
                 if (transactionIds != null) {
@@ -380,6 +420,17 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                         ShareAccountTransaction transaction = account.retrievePurchasedShares(id);
                         transactions.add(transaction);
                         totalSubscribedShares += transaction.getTotalShares();
+                        if (transaction.isUsingSavings()) {
+                            if (transaction.getSavingsTransactionId() != null) {
+                                this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
+                                        transaction.getSavingsTransactionId());
+                            }
+                            final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transaction.getPurchasedDate(),
+                                    transaction.amount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SHARES,
+                                    account.getSavingsAccount().getId(), account.getId(), "Additional Share Purchase", null, null, null,
+                                    null, org.apache.fineract.infrastructure.core.domain.ExternalId.empty(), null, null);
+                            this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+                        }
                     }
                     this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
                 }
@@ -407,13 +458,17 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
             Map<String, Object> changes = this.accountDataSerializer.validateAndRejectAddtionalShares(jsonCommand, account);
             if (!changes.isEmpty()) {
-                this.shareAccountRepository.save(account);
+                this.shareAccountRepository.saveAndFlush(account);
                 ArrayList<Long> transactionIds = (ArrayList<Long>) changes.get(ShareAccountApiConstants.requestedshares_paramname);
                 if (transactionIds != null) {
                     Set<ShareAccountTransaction> transactions = new HashSet<>();
                     for (Long id : transactionIds) {
                         ShareAccountTransaction transaction = account.retrievePurchasedShares(id);
                         transactions.add(transaction);
+                        if (transaction.isUsingSavings() && transaction.getSavingsTransactionId() != null) {
+                            this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
+                                    transaction.getSavingsTransactionId());
+                        }
                     }
                     this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
                 }
@@ -502,5 +557,26 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private void handleDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
         throw ErrorHandler.getMappable(dve, "error.msg.shareaccount.unknown.data.integrity.issue",
                 "Unknown data integrity issue with resource.");
+    }
+
+    private void holdFunds(final ShareAccount account, final ShareAccountTransaction transaction, final JsonCommand jsonCommand) {
+        final Map<String, Object> holdCommandMap = new HashMap<>();
+        BigDecimal totalAmount = transaction.amount();
+        if (transaction.chargeAmount() != null) {
+            totalAmount = totalAmount.add(transaction.chargeAmount());
+        }
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionAmountParamName, totalAmount);
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionDateParamName,
+                transaction.getPurchasedDate().format(DateTimeFormatter.ofPattern(jsonCommand.dateFormat())));
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.reasonForBlockParamName, "Share Purchase Hold");
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName, jsonCommand.extractLocale().toString());
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.dateFormatParamName, jsonCommand.dateFormat());
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, true);
+
+        final JsonCommand holdCommand = JsonCommand.fromExistingCommand(jsonCommand,
+                GoogleGsonSerializerHelper.createSimpleGson().toJsonTree(holdCommandMap));
+        final CommandProcessingResult holdResult = this.savingsAccountWritePlatformService
+                .holdAmount(account.getSavingsAccount().getId(), holdCommand);
+        transaction.updateSavingsTransactionId(holdResult.getResourceId());
     }
 }

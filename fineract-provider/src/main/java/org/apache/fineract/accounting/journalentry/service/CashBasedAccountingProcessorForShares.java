@@ -89,6 +89,20 @@ public class CashBasedAccountingProcessorForShares implements AccountingProcesso
     public void createJournalEntriesForPurchase(final Long shareAccountId, final Long shareProductId, final String currencyCode,
             SharesTransactionDTO transactionDTO, final LocalDate transactionDate, final String transactionId, final Office office,
             final Long paymentTypeId, final BigDecimal amount, final BigDecimal chargeAmount, final List<ChargePaymentDTO> feePayments) {
+        if (transactionDTO.isUseSavings()) {
+            if (transactionDTO.getTransactionStatus().isApproved()) {
+                BigDecimal amountForJE = amount;
+                if (chargeAmount != null && chargeAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    amountForJE = amount.subtract(chargeAmount);
+                }
+                // When using savings, the transfer already handled Savings -> Shares Reference/Suspense.
+                // Here we just move from Suspense to Equity.
+                this.helper.createJournalEntriesForShares(office, currencyCode, CashAccountsForShares.SHARES_SUSPENSE.getValue(),
+                        CashAccountsForShares.SHARES_EQUITY.getValue(), shareProductId, paymentTypeId, shareAccountId, transactionId,
+                        transactionDate, amountForJE);
+            }
+            return;
+        }
         if (transactionDTO.getTransactionStatus().isApplied()) {
             if (chargeAmount == null || chargeAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 this.helper.createJournalEntriesForShares(office, currencyCode, CashAccountsForShares.SHARES_REFERENCE.getValue(),

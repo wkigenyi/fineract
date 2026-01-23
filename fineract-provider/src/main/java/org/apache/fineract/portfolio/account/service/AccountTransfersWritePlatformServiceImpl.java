@@ -276,7 +276,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     public Long transferFunds(final AccountTransferDTO accountTransferDTO) {
         Long transferTransactionId = null;
         final boolean isAccountTransfer = true;
-        final boolean isRegularTransaction = accountTransferDTO.isRegularTransaction();
+        final boolean isRegularTransaction = accountTransferDTO.isRegularTransaction() == null || accountTransferDTO.isRegularTransaction();
         final boolean backdatedTxnsAllowedTill = false;
         AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
         if (isSavingsToLoanAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
@@ -400,6 +400,35 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             transferTransactionId = accountTransferDetails.getId();
 
+        } else if (isSavingsToSharesAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
+            SavingsAccount fromSavingsAccount = null;
+            if (accountTransferDetails == null) {
+                if (accountTransferDTO.getFromSavingsAccount() == null) {
+                    fromSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getFromAccountId(),
+                            backdatedTxnsAllowedTill);
+                } else {
+                    fromSavingsAccount = accountTransferDTO.getFromSavingsAccount();
+                    this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
+                }
+            } else {
+                fromSavingsAccount = accountTransferDetails.fromSavingsAccount();
+                this.savingsAccountAssembler.setHelpers(fromSavingsAccount);
+            }
+
+            final SavingsTransactionBooleanValues transactionBooleanValues = new SavingsTransactionBooleanValues(isAccountTransfer,
+                    isRegularTransaction, fromSavingsAccount.isWithdrawalFeeApplicableForTransfer(),
+                    AccountTransferType.fromInt(accountTransferDTO.getTransferType()).isInterestTransfer(),
+                    accountTransferDTO.isExceptionForBalanceCheck());
+
+            final SavingsAccountTransaction withdrawal = this.savingsAccountDomainService.handleWithdrawal(fromSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
+                    accountTransferDTO.getPaymentDetail(), transactionBooleanValues, backdatedTxnsAllowedTill);
+
+            accountTransferDetails = this.accountTransferAssembler.assembleSavingsToSharesTransfer(accountTransferDTO, fromSavingsAccount,
+                    withdrawal);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            transferTransactionId = accountTransferDetails.getId();
+
         } else if (isLoanToSavingsAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
 
             Loan fromLoanAccount = null;
@@ -504,6 +533,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private boolean isSavingsToSavingsAccountTransfer(final PortfolioAccountType fromAccountType,
             final PortfolioAccountType toAccountType) {
         return PortfolioAccountType.SAVINGS.equals(fromAccountType) && PortfolioAccountType.SAVINGS.equals(toAccountType);
+    }
+
+    private boolean isSavingsToSharesAccountTransfer(final PortfolioAccountType fromAccountType,
+            final PortfolioAccountType toAccountType) {
+        return fromAccountType.isSavingsAccount() && toAccountType.isSharesAccount();
     }
 
     @Override
