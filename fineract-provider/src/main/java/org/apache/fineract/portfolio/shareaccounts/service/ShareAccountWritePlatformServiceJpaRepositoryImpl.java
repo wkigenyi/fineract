@@ -87,9 +87,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final BusinessEventNotifierService businessEventNotifierService;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
-
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
-
 
     @Override
     public CommandProcessingResult createShareAccount(JsonCommand jsonCommand) {
@@ -280,7 +278,6 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 if (transaction.isActive() && transaction.isPurchasTransaction()) {
                     journalTransactions.add(transaction);
                     totalSubsribedShares += transaction.getTotalShares();
-
                     if (transaction.isUsingSavings()) {
                         if (transaction.getSavingsTransactionId() != null) {
                             // Get the hold transaction
@@ -455,7 +452,6 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                         ShareAccountTransaction transaction = account.retrievePurchasedShares(id);
                         transactions.add(transaction);
                         totalSubscribedShares += transaction.getTotalShares();
-
                         if (transaction.isUsingSavings()) {
                             if (transaction.getSavingsTransactionId() != null) {
                                 // Get the hold transaction
@@ -634,7 +630,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.reasonForBlockParamName, "Share Purchase Hold");
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName, jsonCommand.extractLocale().toString());
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.dateFormatParamName, jsonCommand.dateFormat());
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, false);
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, true);
 
         final JsonCommand holdCommand = JsonCommand.fromExistingCommand(jsonCommand,
                 GoogleGsonSerializerHelper.createSimpleGson().toJsonTree(holdCommandMap));
@@ -642,7 +638,6 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 .holdAmount(account.getSavingsAccount().getId(), holdCommand);
         transaction.updateSavingsTransactionId(holdResult.getResourceId());
     }
-
     private void recalculateShareProductSummary(final ShareProduct shareProduct) {
         Long totalSubscribedShares = this.shareAccountRepository.getTotalSubscribedShares(shareProduct.getId());
         shareProduct.recalculateSummary(totalSubscribedShares);
