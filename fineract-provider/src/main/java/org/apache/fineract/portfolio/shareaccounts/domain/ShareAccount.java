@@ -39,6 +39,7 @@ import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.security.service.RandomPasswordGenerator;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
+import org.apache.fineract.organisation.office.domain.Office;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.common.domain.PeriodFrequencyType;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
@@ -333,6 +334,14 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     public Long getClientId() {
         return this.client.getId();
+    }
+
+    public Office getOffice() {
+        return this.client.getOffice();
+    }
+
+    public SavingsAccount getSavingsAccount() {
+        return this.savingsAccount;
     }
 
     public String getClientName() {

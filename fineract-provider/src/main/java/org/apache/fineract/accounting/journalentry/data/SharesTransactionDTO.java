@@ -43,4 +43,6 @@ public class SharesTransactionDTO {
 
     /** Breakdowns of fees and penalties this Transaction pays **/
     private final List<ChargePaymentDTO> feePayments;
+
+    private final boolean useSavings;
 }

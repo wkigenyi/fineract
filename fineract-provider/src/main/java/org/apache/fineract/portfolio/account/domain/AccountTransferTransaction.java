@@ -148,4 +148,11 @@ public class AccountTransferTransaction extends AbstractPersistableCustom<Long> 
         return new AccountTransferTransaction(accountTransferDetails, null, null, repaymentTransaction, disburseTransaction,
                 transactionDate, transactionMonetaryAmount, description);
     }
+
+    public static AccountTransferTransaction savingsToSharesTransfer(final AccountTransferDetails accountTransferDetails,
+            final SavingsAccountTransaction withdrawal, final LocalDate transactionDate, final Money transactionAmount,
+            final String description) {
+        return new AccountTransferTransaction(accountTransferDetails, withdrawal, null, null, null, transactionDate, transactionAmount,
+                description);
+    }
 }

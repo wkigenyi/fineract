@@ -23,6 +23,7 @@ public enum PortfolioAccountType {
     INVALID(0, "accountType.invalid"), //
     LOAN(1, "accountType.loan"), //
     SAVINGS(2, "accountType.savings"), //
+    SHARES(3, "accountType.shares"), //
     ;
 
     private final Integer value;
@@ -52,10 +53,27 @@ public enum PortfolioAccountType {
                 case 2:
                     enumType = SAVINGS;
                 break;
+                case 3:
+                    enumType = SHARES;
+                break;
                 default:
                     enumType = INVALID;
             }
         }
         return enumType;
+    }
+
+    // TODO: bad practice and unnecessary code! why not just use the enum values themselves!?!
+    public boolean isSavingsAccount() {
+        return this.equals(SAVINGS);
+    }
+
+    // TODO: bad practice and unnecessary code! why not just use the enum values themselves!?!
+    public boolean isLoanAccount() {
+        return this.equals(LOAN);
+    }
+
+    public boolean isSharesAccount() {
+        return this.equals(SHARES);
     }
 }

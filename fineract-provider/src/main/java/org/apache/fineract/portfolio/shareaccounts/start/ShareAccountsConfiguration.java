@@ -26,6 +26,7 @@ import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecific
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.portfolio.account.service.AccountNumberGenerator;
+import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.accounts.constants.AccountsApiConstants;
 import org.apache.fineract.portfolio.accounts.service.AccountsCommandsService;
 import org.apache.fineract.portfolio.charge.service.ChargeReadPlatformService;
@@ -34,6 +35,7 @@ import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
+import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountDividendRepository;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.shareaccounts.serialization.ShareAccountDataSerializer;
@@ -115,9 +117,11 @@ public class ShareAccountsConfiguration {
             ShareAccountRepositoryWrapper shareAccountRepository, ShareProductRepositoryWrapper shareProductRepository,
             AccountNumberGenerator accountNumberGenerator, AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
             JournalEntryWritePlatformService journalEntryWritePlatformService, NoteRepository noteRepository,
-            BusinessEventNotifierService businessEventNotifierService) {
+            BusinessEventNotifierService businessEventNotifierService,
+            AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+            SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
         return new ShareAccountWritePlatformServiceJpaRepositoryImpl(accountDataSerializer, shareAccountRepository, shareProductRepository,
                 accountNumberGenerator, accountNumberFormatRepository, journalEntryWritePlatformService, noteRepository,
-                businessEventNotifierService);
+                businessEventNotifierService, accountTransfersWritePlatformService, savingsAccountWritePlatformService);
     }
 }

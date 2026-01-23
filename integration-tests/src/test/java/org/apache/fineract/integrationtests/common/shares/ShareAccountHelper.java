@@ -32,12 +32,14 @@ public class ShareAccountHelper {
     private String externalId;
     private String savingsAccountId;
     private String requestedShares;
+    private String requestedDate;
     private String applicationDate;
     private String allowDividendCalculationForInactiveClients;
     private String minimumActivePeriod;
     private String minimumActivePeriodFrequencyType;
     private String lockinPeriodFrequency;
     private String lockinPeriodFrequencyType;
+    private Boolean useSavings;
     private List<Map<String, Object>> charges = null;
 
     public ShareAccountHelper withClientId(final String clientId) {
@@ -65,6 +67,11 @@ public class ShareAccountHelper {
         return this;
     }
 
+    public ShareAccountHelper withRequestedDate(final String requestedDate) {
+        this.requestedDate = requestedDate;
+        return this;
+    }
+
     public ShareAccountHelper withApplicationDate(final String applicationDate) {
         this.applicationDate = applicationDate;
         return this;
@@ -78,6 +85,11 @@ public class ShareAccountHelper {
     public ShareAccountHelper withCharges(final List<Map<String, Object>> charges) {
         this.charges = new ArrayList<>();
         this.charges.addAll(charges);
+        return this;
+    }
+
+    public ShareAccountHelper withUseSavings(final Boolean useSavings) {
+        this.useSavings = useSavings;
         return this;
     }
 
@@ -105,6 +117,12 @@ public class ShareAccountHelper {
         }
         if (this.requestedShares != null) {
             map.put("requestedShares", this.requestedShares);
+        }
+        if (this.requestedDate != null) {
+            map.put("requestedDate", this.requestedDate);
+        }
+        if (this.useSavings != null) {
+            map.put("useSavings", this.useSavings);
         }
         if (this.allowDividendCalculationForInactiveClients != null) {
             map.put("allowDividendCalculationForInactiveClients", this.allowDividendCalculationForInactiveClients);

@@ -119,8 +119,8 @@ public class AccountTransferDTO {
         this.loan = null;
         this.toSavingsAccount = null;
         this.fromSavingsAccount = null;
-        this.isRegularTransaction = null;
-        this.isExceptionForBalanceCheck = null;
+        this.isRegularTransaction = Boolean.TRUE;
+        this.isExceptionForBalanceCheck = Boolean.FALSE;
     }
 
     public LocalDate getTransactionDate() {
