@@ -33,6 +33,7 @@ import org.apache.fineract.portfolio.charge.service.ChargeReadPlatformService;
 import org.apache.fineract.portfolio.client.service.ClientReadPlatformService;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountDomainService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
@@ -112,16 +113,17 @@ public class ShareAccountsConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(ShareAccountWritePlatformService.class)
     public ShareAccountWritePlatformService shareAccountWritePlatformService(ShareAccountDataSerializer accountDataSerializer,
-            ShareAccountRepositoryWrapper shareAccountRepository, ShareProductRepositoryWrapper shareProductRepository,
-            AccountNumberGenerator accountNumberGenerator, AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
-            JournalEntryWritePlatformService journalEntryWritePlatformService, NoteRepository noteRepository,
-            BusinessEventNotifierService businessEventNotifierService,
-            AccountTransfersWritePlatformService accountTransfersWritePlatformService,
-            SavingsAccountWritePlatformService savingsAccountWritePlatformService) {
+                                                                             ShareAccountRepositoryWrapper shareAccountRepository, ShareProductRepositoryWrapper shareProductRepository,
+                                                                             AccountNumberGenerator accountNumberGenerator, AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+                                                                             JournalEntryWritePlatformService journalEntryWritePlatformService, NoteRepository noteRepository,
+                                                                             BusinessEventNotifierService businessEventNotifierService,
+                                                                             AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+                                                                             SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+                                                                             SavingsAccountTransactionRepository savingsAccountTransactionRepository) {  // ADD THIS
         return new ShareAccountWritePlatformServiceJpaRepositoryImpl(accountDataSerializer, shareAccountRepository, shareProductRepository,
                 accountNumberGenerator, accountNumberFormatRepository, journalEntryWritePlatformService, noteRepository,
-                businessEventNotifierService, accountTransfersWritePlatformService, savingsAccountWritePlatformService);
+                businessEventNotifierService, accountTransfersWritePlatformService, savingsAccountWritePlatformService,
+                savingsAccountTransactionRepository);  // ADD THIS
     }
 }

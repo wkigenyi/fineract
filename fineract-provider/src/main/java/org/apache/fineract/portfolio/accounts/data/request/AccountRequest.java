@@ -55,4 +55,5 @@ public class AccountRequest implements Serializable {
     private Long id;
     private String currencyCode;
     private String applicationDate;
+    private Boolean useSavings;
 }
