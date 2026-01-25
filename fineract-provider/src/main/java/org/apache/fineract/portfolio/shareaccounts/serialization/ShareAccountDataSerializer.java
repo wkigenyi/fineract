@@ -140,6 +140,7 @@ public class ShareAccountDataSerializer {
         JsonElement element = jsonCommand.parsedJson();
 
         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(element.getAsJsonObject());
+
         final Long clientId = this.fromApiJsonHelper.extractLongNamed(ShareAccountApiConstants.clientid_paramname, element);
         final Long productId = this.fromApiJsonHelper.extractLongNamed(ShareAccountApiConstants.productid_paramname, element);
         ShareProduct shareProduct = this.shareProductRepository.findOneWithNotFoundDetection(productId);
@@ -194,6 +195,9 @@ public class ShareAccountDataSerializer {
             throw new PlatformApiDataValidationException(dataValidationErrors);
         }
 
+        Boolean useSavings = this.fromApiJsonHelper.extractBooleanNamed(ShareAccountApiConstants.use_savings_paramname, element);
+        LoggerFactory.getLogger(ShareAccountDataSerializer.class).info("Use savings is: "+useSavings);
+
         Client client = this.clientRepositoryWrapper.findOneWithNotFoundDetection(clientId);
         if (!this.savingsAccountReadPlatformService.isAccountBelongsToClient(clientId, savingsAccountId, DepositAccountType.SAVINGS_DEPOSIT,
                 shareProduct.getCurrency().getCode())) {
@@ -219,7 +223,6 @@ public class ShareAccountDataSerializer {
         Long approvedShares = null;
         Long pendingShares = requestedShares;
         BigDecimal unitPrice = shareProduct.deriveMarketPrice(applicationDate);
-        Boolean useSavings = this.fromApiJsonHelper.extractBooleanNamed(ShareAccountApiConstants.use_savings_paramname, element);
         ShareAccountTransaction transaction = new ShareAccountTransaction(applicationDate, requestedShares, unitPrice, useSavings);
         Set<ShareAccountTransaction> sharesPurchased = new HashSet<>();
         sharesPurchased.add(transaction);

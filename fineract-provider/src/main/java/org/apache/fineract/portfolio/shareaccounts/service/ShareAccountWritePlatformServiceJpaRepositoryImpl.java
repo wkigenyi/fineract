@@ -47,11 +47,14 @@ import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccou
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
+import org.apache.fineract.portfolio.account.domain.AccountTransferType;
 import org.apache.fineract.portfolio.account.service.AccountNumberGenerator;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.accounts.constants.ShareAccountApiConstants;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
@@ -84,6 +87,9 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final BusinessEventNotifierService businessEventNotifierService;
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+
+    private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
+
 
     @Override
     public CommandProcessingResult createShareAccount(JsonCommand jsonCommand) {
@@ -274,15 +280,45 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 if (transaction.isActive() && transaction.isPurchasTransaction()) {
                     journalTransactions.add(transaction);
                     totalSubsribedShares += transaction.getTotalShares();
+
                     if (transaction.isUsingSavings()) {
                         if (transaction.getSavingsTransactionId() != null) {
-                            this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
-                                    transaction.getSavingsTransactionId());
+                            // Get the hold transaction
+                            SavingsAccountTransaction holdTransaction = this.savingsAccountTransactionRepository
+                                    .findOneByIdAndSavingsAccountId(transaction.getSavingsTransactionId(),
+                                            account.getSavingsAccount().getId());
+
+                            if (holdTransaction != null) {
+                                // Release the hold amount from the savings account
+                                account.getSavingsAccount().releaseOnHoldAmount(holdTransaction.getAmount());
+
+                                // Create release transaction with the share purchase date
+                                SavingsAccountTransaction releaseTransaction = SavingsAccountTransaction
+                                        .releaseAmount(holdTransaction, transaction.getPurchasedDate());
+                                this.savingsAccountTransactionRepository.saveAndFlush(releaseTransaction);
+
+                                // Link the release transaction to the hold transaction
+                                holdTransaction.updateReleaseId(releaseTransaction.getId());
+                                this.savingsAccountTransactionRepository.saveAndFlush(holdTransaction);
+                            }
                         }
-                        final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transaction.getPurchasedDate(),
-                                transaction.amount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SHARES,
-                                account.getSavingsAccount().getId(), account.getId(), "Share Purchase", null, null, null, null,
-                                org.apache.fineract.infrastructure.core.domain.ExternalId.empty(), null, null);
+
+                        // Now perform the transfer
+                        final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(
+                                transaction.getPurchasedDate(),
+                                transaction.amount(),
+                                PortfolioAccountType.SAVINGS,
+                                PortfolioAccountType.SHARES,
+                                account.getSavingsAccount().getId(),
+                                account.getId(),
+                                "Share Purchase",
+                                null, null, null, null, null, null, null,
+                                AccountTransferType.ACCOUNT_TRANSFER.getValue(),
+                                null, null,
+                                org.apache.fineract.infrastructure.core.domain.ExternalId.empty(),
+                                null, null,
+                                account.getSavingsAccount(),
+                                Boolean.TRUE, Boolean.FALSE);
                         this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
                     }
                 }
@@ -420,15 +456,45 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                         ShareAccountTransaction transaction = account.retrievePurchasedShares(id);
                         transactions.add(transaction);
                         totalSubscribedShares += transaction.getTotalShares();
+
                         if (transaction.isUsingSavings()) {
                             if (transaction.getSavingsTransactionId() != null) {
-                                this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
-                                        transaction.getSavingsTransactionId());
+                                // Get the hold transaction
+                                SavingsAccountTransaction holdTransaction = this.savingsAccountTransactionRepository
+                                        .findOneByIdAndSavingsAccountId(transaction.getSavingsTransactionId(),
+                                                account.getSavingsAccount().getId());
+
+                                if (holdTransaction != null) {
+                                    // Release the hold amount from the savings account
+                                    account.getSavingsAccount().releaseOnHoldAmount(holdTransaction.getAmount());
+
+                                    // Create release transaction with the share purchase date
+                                    SavingsAccountTransaction releaseTransaction = SavingsAccountTransaction
+                                            .releaseAmount(holdTransaction, transaction.getPurchasedDate());
+                                    this.savingsAccountTransactionRepository.saveAndFlush(releaseTransaction);
+
+                                    // Link the release transaction to the hold transaction
+                                    holdTransaction.updateReleaseId(releaseTransaction.getId());
+                                    this.savingsAccountTransactionRepository.saveAndFlush(holdTransaction);
+                                }
                             }
-                            final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transaction.getPurchasedDate(),
-                                    transaction.amount(), PortfolioAccountType.SAVINGS, PortfolioAccountType.SHARES,
-                                    account.getSavingsAccount().getId(), account.getId(), "Additional Share Purchase", null, null, null,
-                                    null, org.apache.fineract.infrastructure.core.domain.ExternalId.empty(), null, null);
+
+                            // Now perform the transfer
+                            final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(
+                                    transaction.getPurchasedDate(),
+                                    transaction.amount(),
+                                    PortfolioAccountType.SAVINGS,
+                                    PortfolioAccountType.SHARES,
+                                    account.getSavingsAccount().getId(),
+                                    account.getId(),
+                                    "Additional Share Purchase",
+                                    null, null, null, null, null, null, null,
+                                    AccountTransferType.ACCOUNT_TRANSFER.getValue(),
+                                    null, null,
+                                    org.apache.fineract.infrastructure.core.domain.ExternalId.empty(),
+                                    null, null,
+                                    account.getSavingsAccount(),
+                                    Boolean.TRUE, Boolean.FALSE);
                             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
                         }
                     }
@@ -571,7 +637,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.reasonForBlockParamName, "Share Purchase Hold");
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName, jsonCommand.extractLocale().toString());
         holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.dateFormatParamName, jsonCommand.dateFormat());
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, true);
+        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, false);
 
         final JsonCommand holdCommand = JsonCommand.fromExistingCommand(jsonCommand,
                 GoogleGsonSerializerHelper.createSimpleGson().toJsonTree(holdCommandMap));
