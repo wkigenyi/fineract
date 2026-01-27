@@ -53,8 +53,10 @@ import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatfo
 import org.apache.fineract.portfolio.accounts.constants.ShareAccountApiConstants;
 import org.apache.fineract.portfolio.note.domain.Note;
 import org.apache.fineract.portfolio.note.domain.NoteRepository;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccount;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransaction;
 import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRepository;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.apache.fineract.portfolio.shareaccounts.data.ShareAccountTransactionEnumData;
 import org.apache.fineract.portfolio.shareaccounts.domain.ShareAccount;
@@ -96,11 +98,10 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             this.shareAccountRepository.saveAndFlush(account);
             generateAccountNumber(account);
 
-            // Hold funds if useSavings is true
+            // Do not hold funds, just verify balance
             for (ShareAccountTransaction transaction : account.getShareAccountTransactions()) {
                 if (transaction.isUsingSavings()) {
-                    holdFunds(account, transaction, jsonCommand);
-                    this.shareAccountRepository.saveAndFlush(account);
+                    validateSufficientFunds(account, transaction);
                 }
             }
 
@@ -120,6 +121,21 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             Throwable throwable = ExceptionUtils.getRootCause(dve.getCause());
             handleDataIntegrityIssues(jsonCommand, throwable, dve);
             return CommandProcessingResult.empty();
+        }
+    }
+
+    private void validateSufficientFunds(ShareAccount account, ShareAccountTransaction transaction) {
+        BigDecimal requiredAmount = transaction.amount();
+        if (transaction.chargeAmount() != null) {
+            requiredAmount = requiredAmount.add(transaction.chargeAmount());
+        }
+
+        SavingsAccount savingsAccount = account.getSavingsAccount();
+        BigDecimal availableBalance = savingsAccount.getWithdrawableBalance();
+
+        if (availableBalance.compareTo(requiredAmount) < 0) {
+            throw new InsufficientAccountBalanceException("share.purchase",
+                    savingsAccount.getAccountBalance(), BigDecimal.ZERO, requiredAmount);
         }
     }
 
@@ -231,8 +247,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 transaction = account.getShareAccountTransaction(transaction);
                 if (transaction != null) {
                     if (transaction.isUsingSavings()) {
-                        holdFunds(account, transaction, jsonCommand);
-                        this.shareAccountRepository.saveAndFlush(account);
+                        validateSufficientFunds(account, transaction);
                         transaction = account.getShareAccountTransaction(transaction);
                     }
                     changes.clear();
