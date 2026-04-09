@@ -22,12 +22,20 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
-    <changeSet author="fineract" id="1772793558475-1">
+    <changeSet author="fineract" id="wcl-0004-1">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
-            <not>
-                <columnExists tableName="m_wc_loan" columnName="account_no"/>
-            </not>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="account_no"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="external_id"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="disbursedon_date"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_wc_loan">
             <column name="account_no" type="VARCHAR(20)">
@@ -42,7 +50,7 @@
     </changeSet>
 
     <!-- Indexes -->
-    <changeSet author="fineract" id="1773049546504-1">
+    <changeSet author="fineract" id="wcl-0004-2">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan"/>
             <columnExists tableName="m_wc_loan" columnName="external_id"/>

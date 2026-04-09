@@ -26,17 +26,34 @@
             SELECT SETVAL('c_configuration_id_seq', COALESCE(MAX(id), 0)+1, false ) FROM c_configuration;
         </sql>
     </changeSet>
-    <changeSet author="fineract" id="2">
+    <changeSet author="fineract" id="2-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_appuser" columnName="failed_login_attempts"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_appuser">
             <column name="failed_login_attempts" type="INT" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="fineract" id="2-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_appuser" columnName="is_login_retries_enabled"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="m_appuser">
             <column name="is_login_retries_enabled" type="BOOLEAN" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
     </changeSet>
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name = 'max-login-retry-attempts'</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="max-login-retry-attempts"/>
             <column name="value" valueNumeric="5"/>

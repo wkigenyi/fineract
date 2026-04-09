@@ -27,6 +27,9 @@
         </sql>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name = 'allow-cash-and-non-cash-accrual'</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="allow-cash-and-non-cash-accrual"/>
             <column name="value" valueNumeric="0"/>

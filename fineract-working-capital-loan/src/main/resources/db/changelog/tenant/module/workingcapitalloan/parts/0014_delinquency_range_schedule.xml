@@ -111,6 +111,14 @@
 
     <!-- Foreign keys -->
     <changeSet author="fineract" id="wcl-0014-4">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_range_schedule"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_delinquency_range_schedule" foreignKeyName="FK_wc_delinquency_range_schedule_loan"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="wc_loan_id" baseTableName="m_wc_loan_delinquency_range_schedule"
                                  constraintName="FK_wc_delinquency_range_schedule_loan" deferrable="false" initiallyDeferred="false"
                                  referencedColumnNames="id" referencedTableName="m_wc_loan"/>
@@ -124,6 +132,14 @@
 
     <!-- Unique constraint and index -->
     <changeSet author="fineract" id="wcl-0014-5">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_range_schedule"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_delinquency_range_schedule" indexName="uc_wc_delinquency_range_schedule_loan_period"/>
+                </not>
+            </and>
+        </preConditions>
         <addUniqueConstraint tableName="m_wc_loan_delinquency_range_schedule"
                              columnNames="wc_loan_id, period_number"
                              constraintName="uc_wc_delinquency_range_schedule_loan_period"/>
@@ -147,6 +163,9 @@
 
     <!-- Register COB business step -->
     <changeSet author="fineract" id="wcl-0014-6">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_batch_business_steps WHERE job_name = 'WORKING_CAPITAL_LOAN_CLOSE_OF_BUSINESS' AND step_name = 'WC_DELINQUENCY_RANGE_SCHEDULE'</sqlCheck>
+        </preConditions>
         <insert tableName="m_batch_business_steps">
             <column name="job_name" value="WORKING_CAPITAL_LOAN_CLOSE_OF_BUSINESS"/>
             <column name="step_name" value="WC_DELINQUENCY_RANGE_SCHEDULE"/>

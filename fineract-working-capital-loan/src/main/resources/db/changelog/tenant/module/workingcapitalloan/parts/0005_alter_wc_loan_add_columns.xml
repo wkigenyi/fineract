@@ -25,7 +25,21 @@
     <!-- Add business columns to existing m_wc_loan (table and id, version, created_by, last_modified_by, created_on_utc, last_modified_on_utc already exist) -->
     <changeSet author="fineract" id="wcl-0005-1">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="client_id"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="product_id"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="principal_amount_proposed"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="currency_code"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_wc_loan">
             <column defaultValueComputed="NULL" name="client_id" type="BIGINT"/>
@@ -298,11 +312,20 @@
     <!-- Foreign key constraints for m_wc_loan -->
     <changeSet author="fineract" id="wcl-0005-7">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
-            <columnExists tableName="m_wc_loan" columnName="client_id"/>
-            <not>
-                <foreignKeyConstraintExists foreignKeyName="FK_m_wc_loan_client"/>
-            </not>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <columnExists tableName="m_wc_loan" columnName="client_id"/>
+                <columnExists tableName="m_wc_loan" columnName="product_id"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_m_wc_loan_client"/>
+                </not>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_m_wc_loan_product"/>
+                </not>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_m_wc_loan_approved_by"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseColumnNames="client_id" baseTableName="m_wc_loan"
                                  constraintName="FK_m_wc_loan_client" deferrable="false" initiallyDeferred="false"
@@ -374,11 +397,20 @@
     <!-- Indexes -->
     <changeSet author="fineract" id="wcl-0005-10">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
-            <columnExists tableName="m_wc_loan" columnName="client_id"/>
-            <not>
-                <indexExists tableName="m_wc_loan" indexName="IND_m_wc_loan_client_id"/>
-            </not>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <columnExists tableName="m_wc_loan" columnName="client_id"/>
+                <columnExists tableName="m_wc_loan" columnName="product_id"/>
+                <not>
+                    <indexExists tableName="m_wc_loan" indexName="IND_m_wc_loan_client_id"/>
+                </not>
+                <not>
+                    <indexExists tableName="m_wc_loan" indexName="IND_m_wc_loan_product_id"/>
+                </not>
+                <not>
+                    <indexExists tableName="m_wc_loan" indexName="IND_m_wc_loan_loan_status_id"/>
+                </not>
+            </and>
         </preConditions>
         <createIndex tableName="m_wc_loan" indexName="IND_m_wc_loan_client_id">
             <column name="client_id"/>

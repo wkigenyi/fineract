@@ -22,8 +22,27 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="fineract" id="command-00002" context="mysql">
+    <changeSet author="fineract" id="command-00002-rename" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="command" />
+                <not>
+                    <tableExists tableName="m_command" />
+                </not>
+            </and>
+        </preConditions>
         <renameTable oldTableName="command" newTableName="m_command" />
+    </changeSet>
+
+    <changeSet author="fineract" id="command-00002-add-columns" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <not>
+                    <columnExists tableName="m_command" columnName="updated_at" />
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_command">
             <column name="updated_at" type="datetime" />
             <column name="executed_at" type="datetime" />
@@ -31,7 +50,16 @@
             <column name="rejected_at" type="datetime" />
         </addColumn>
     </changeSet>
+
     <changeSet author="fineract" id="command-00003" context="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <not>
+                    <columnExists tableName="m_command" columnName="updated_at" />
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_command">
             <column name="updated_at" type="timestamp with time zone" />
             <column name="executed_at" type="timestamp with time zone" />
@@ -39,10 +67,42 @@
             <column name="rejected_at" type="timestamp with time zone" />
         </addColumn>
     </changeSet>
-    <changeSet author="fineract" id="command-00004" context="postgresql,mysql">
-        <renameColumn tableName="m_command" oldColumnName="username" newColumnName="initiated_by_username" columnDataType="varchar(255)" />
-        <renameColumn tableName="m_command" oldColumnName="payload" newColumnName="request" columnDataType="text" />
 
+    <changeSet author="fineract" id="command-00004-rename-1" context="postgresql,mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <columnExists tableName="m_command" columnName="username" />
+                <not>
+                    <columnExists tableName="m_command" columnName="initiated_by_username" />
+                </not>
+            </and>
+        </preConditions>
+        <renameColumn tableName="m_command" oldColumnName="username" newColumnName="initiated_by_username" columnDataType="varchar(255)" />
+    </changeSet>
+
+    <changeSet author="fineract" id="command-00004-rename-2" context="postgresql,mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <columnExists tableName="m_command" columnName="payload" />
+                <not>
+                    <columnExists tableName="m_command" columnName="request" />
+                </not>
+            </and>
+        </preConditions>
+        <renameColumn tableName="m_command" oldColumnName="payload" newColumnName="request" columnDataType="text" />
+    </changeSet>
+
+    <changeSet author="fineract" id="command-00004-add-columns" context="postgresql,mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <not>
+                    <columnExists tableName="m_command" columnName="idempotency_key" />
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_command">
             <column name="idempotency_key" type="varchar(255)" />
             <column name="executed_by_username" type="varchar(255)" />
@@ -53,6 +113,17 @@
             <column name="response" type="text" />
             <column name="error" type="text" />
         </addColumn>
+    </changeSet>
+
+    <changeSet author="fineract" id="command-00004-index" context="postgresql,mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_command" />
+                <not>
+                    <indexExists tableName="m_command" indexName="m_command_idempotency_key_index" />
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_command" indexName="m_command_idempotency_key_index">
             <column name="idempotency_key" />
         </createIndex>

@@ -23,7 +23,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
-    <changeSet id="wcl-0008-1" author="fineract">
+    <changeSet id="wcl-0009-1" author="fineract">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_wc_loan_amortization_model"/>
@@ -51,18 +51,42 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="wcl-0008-2" author="fineract">
+    <changeSet id="wcl-0009-2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_amortization_model"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_amortization_model" indexName="uc_m_wc_loan_amort_model_loan"/>
+                </not>
+            </and>
+        </preConditions>
         <addUniqueConstraint columnNames="loan_id" constraintName="uc_m_wc_loan_amort_model_loan"
                              tableName="m_wc_loan_amortization_model"/>
     </changeSet>
 
-    <changeSet id="wcl-0008-3" author="fineract">
+    <changeSet id="wcl-0009-3" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_amortization_model"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_amortization_model" foreignKeyName="fk_m_wc_loan_amort_model_loan"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="loan_id" baseTableName="m_wc_loan_amortization_model"
                                  constraintName="fk_m_wc_loan_amort_model_loan" referencedColumnNames="id"
                                  referencedTableName="m_wc_loan"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-4-my" context="mysql">
+    <changeSet author="fineract" id="wcl-0009-4-my" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_amortization_model"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_amortization_model" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_amortization_model">
             <column name="last_modified_on_utc" type="DATETIME(6)">
                 <constraints nullable="false"/>
@@ -70,7 +94,15 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-4-pg" context="postgresql">
+    <changeSet author="fineract" id="wcl-0009-4-pg" context="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_amortization_model"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_amortization_model" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_amortization_model">
             <column name="last_modified_on_utc" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>

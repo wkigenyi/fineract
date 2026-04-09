@@ -25,7 +25,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="create-m-delinquency-payment-rule-table2" author="fineract">
+    <changeSet id="wcl-0008-1" author="fineract">
 
         <preConditions onFail="MARK_RAN">
             <not>
@@ -73,37 +73,47 @@
         </createTable>
 
     </changeSet>
-    <changeSet author="fineract" id="create-m-delinquency-payment-rule-table-3" context="mysql">
+    <changeSet author="fineract" id="wcl-0008-2" context="mysql">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_delinquency_payment_rule"/>
-            <not>
-                <columnExists tableName="m_delinquency_payment_rule" columnName="created_on_utc"/>
-            </not>
+            <and>
+                <tableExists tableName="m_delinquency_payment_rule"/>
+                <not>
+                    <columnExists tableName="m_delinquency_payment_rule" columnName="created_on_utc"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_delinquency_payment_rule" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_delinquency_payment_rule">
             <column name="created_on_utc" type="DATETIME"/>
             <column name="last_modified_on_utc" type="DATETIME"/>
         </addColumn>
     </changeSet>
-    <changeSet author="fineract" id="create-m-delinquency-payment-rule-table-4" context="postgresql">
+    <changeSet author="fineract" id="wcl-0008-3" context="postgresql">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_delinquency_payment_rule"/>
-            <not>
-                <columnExists tableName="m_delinquency_payment_rule" columnName="created_on_utc"/>
-            </not>
+            <and>
+                <tableExists tableName="m_delinquency_payment_rule"/>
+                <not>
+                    <columnExists tableName="m_delinquency_payment_rule" columnName="created_on_utc"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_delinquency_payment_rule" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_delinquency_payment_rule">
             <column name="created_on_utc" type="TIMESTAMP WITH TIME ZONE"/>
             <column name="last_modified_on_utc" type="TIMESTAMP WITH TIME ZONE"/>
         </addColumn>
     </changeSet>
-    <changeSet id="add-unique-m-delinquency-payment-rule-bucket1" author="fineract">
+    <changeSet id="wcl-0008-4" author="fineract">
 
         <preConditions onFail="MARK_RAN">
             <not>
-                <uniqueConstraintExists
+                <indexExists
                         tableName="m_delinquency_payment_rule"
-                        constraintName="uc_m_delinquency_payment_rule_bucket"/>
+                        indexName="uc_m_delinquency_payment_rule_bucket"/>
             </not>
         </preConditions>
 
@@ -113,7 +123,7 @@
                 constraintName="uc_m_delinquency_payment_rule_bucket"/>
 
     </changeSet>
-    <changeSet id="add-fk-m-delinquency-payment-rule-bucket1" author="dev">
+    <changeSet id="wcl-0008-5" author="dev">
 
         <preConditions onFail="MARK_RAN">
             <not>
@@ -130,7 +140,7 @@
                 constraintName="FK_M_DELINQUENCY_PAYMENT_RULE_ON_BUCKET"/>
 
     </changeSet>
-    <changeSet id="add-bucket-type-to-m-delinquency-bucket1" author="fineract">
+    <changeSet id="wcl-0008-6" author="fineract">
 
         <preConditions onFail="MARK_RAN">
             <and>

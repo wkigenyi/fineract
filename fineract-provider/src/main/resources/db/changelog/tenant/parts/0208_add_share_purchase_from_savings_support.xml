@@ -27,16 +27,37 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_share_account_transactions" columnName="use_savings"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_share_account_transactions">
             <column name="use_savings" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="true"/>
             </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="fineract" id="1-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_share_account_transactions" columnName="savings_transaction_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="m_share_account_transactions">
             <column name="savings_transaction_id" type="bigint">
                 <constraints nullable="true" foreignKeyName="FK_M_SHARE_ACCOUNT_TRANSACTIONS_SAVINGS_TRANSACTION" referencedTableName="m_savings_account_transaction" referencedColumnNames="id"/>
             </column>
         </addColumn>
     </changeSet>
+
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_account_transfer_details" columnName="to_share_account_id"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_account_transfer_details">
             <column name="to_share_account_id" type="bigint">
                 <constraints nullable="true" foreignKeyName="FK_M_ACCOUNT_TRANSFER_DETAILS_TO_SHARE_ACCOUNT" referencedTableName="m_share_account" referencedColumnNames="id"/>

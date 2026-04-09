@@ -23,6 +23,11 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_product_loan" columnName="allow_full_term_for_tranche"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_product_loan">
             <column defaultValueBoolean="false" type="boolean" name="allow_full_term_for_tranche">
                 <constraints nullable="false"/>
@@ -30,6 +35,11 @@
         </addColumn>
     </changeSet>
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_loan" columnName="allow_full_term_for_tranche"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_loan">
             <column defaultValueBoolean="false" type="boolean" name="allow_full_term_for_tranche">
                 <constraints nullable="false"/>

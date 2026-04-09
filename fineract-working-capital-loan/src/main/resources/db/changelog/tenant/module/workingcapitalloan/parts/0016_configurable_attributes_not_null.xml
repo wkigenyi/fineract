@@ -25,6 +25,9 @@
 
     <!-- Update existing NULL values to false and set column defaults for rolling deployment safety -->
     <changeSet author="fineract" id="wclp-0016-1">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_wc_loan_product_configurable_attributes"/>
+        </preConditions>
         <update tableName="m_wc_loan_product_configurable_attributes">
             <column name="delinquency_bucket_classification_overridable" valueBoolean="false"/>
             <where>delinquency_bucket_classification_overridable IS NULL</where>
@@ -45,6 +48,15 @@
 
     <!-- Set column defaults to false so old code inserting NULLs gets false during rolling deployment -->
     <changeSet author="fineract" id="wclp-0016-2">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_configurable_attributes"/>
+                <columnExists tableName="m_wc_loan_product_configurable_attributes" columnName="delinquency_bucket_classification_overridable"/>
+                <columnExists tableName="m_wc_loan_product_configurable_attributes" columnName="discount_default_overridable"/>
+                <columnExists tableName="m_wc_loan_product_configurable_attributes" columnName="period_payment_frequency_overridable"/>
+                <columnExists tableName="m_wc_loan_product_configurable_attributes" columnName="period_payment_frequency_type_overridable"/>
+            </and>
+        </preConditions>
         <addDefaultValue tableName="m_wc_loan_product_configurable_attributes"
                          columnName="delinquency_bucket_classification_overridable"
                          columnDataType="BOOLEAN"

@@ -57,6 +57,14 @@
 
     <!-- Add UTC datetime columns for audit (MySQL) -->
     <changeSet author="fineract" id="wcl-0015-2" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_action"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_delinquency_action" columnName="created_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_delinquency_action">
             <column name="created_on_utc" type="DATETIME(6)">
                 <constraints nullable="false"/>
@@ -69,6 +77,14 @@
 
     <!-- Add UTC datetime columns for audit (PostgreSQL) -->
     <changeSet author="fineract" id="wcl-0015-2-pg" context="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_action"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_delinquency_action" columnName="created_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_delinquency_action">
             <column name="created_on_utc" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
@@ -81,6 +97,14 @@
 
     <!-- Foreign keys -->
     <changeSet author="fineract" id="wcl-0015-3">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_action"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_delinquency_action" foreignKeyName="FK_wc_loan_delinquency_action_loan"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="wc_loan_id" baseTableName="m_wc_loan_delinquency_action"
                                  constraintName="FK_wc_loan_delinquency_action_loan" deferrable="false" initiallyDeferred="false"
                                  referencedColumnNames="id" referencedTableName="m_wc_loan"/>
@@ -94,6 +118,14 @@
 
     <!-- Index on wc_loan_id -->
     <changeSet author="fineract" id="wcl-0015-4">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_delinquency_action"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_delinquency_action" indexName="IND_wc_loan_delinquency_action_loan_id"/>
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_wc_loan_delinquency_action" indexName="IND_wc_loan_delinquency_action_loan_id">
             <column name="wc_loan_id"/>
         </createIndex>

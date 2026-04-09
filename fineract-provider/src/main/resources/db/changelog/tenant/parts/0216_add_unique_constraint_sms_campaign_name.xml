@@ -23,6 +23,13 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists
+                        tableName="sms_campaign"
+                        indexName="campaign_name_UNIQUE"/>
+            </not>
+        </preConditions>
         <addUniqueConstraint columnNames="campaign_name" constraintName="campaign_name_UNIQUE"
                              tableName="sms_campaign"/>
     </changeSet>

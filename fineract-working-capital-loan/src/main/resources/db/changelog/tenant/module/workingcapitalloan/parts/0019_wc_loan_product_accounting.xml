@@ -23,7 +23,15 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-  <changeSet author="fineract" id="wc-loan-product-accounting-1">
+  <changeSet author="fineract" id="wcl-0019-1">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="m_wc_loan_product"/>
+        <not>
+          <columnExists tableName="m_wc_loan_product" columnName="accounting_type"/>
+        </not>
+      </and>
+    </preConditions>
     <addColumn tableName="m_wc_loan_product">
       <column name="accounting_type" type="VARCHAR(20)" defaultValue="NONE">
         <constraints nullable="false"/>

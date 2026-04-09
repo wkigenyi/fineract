@@ -62,8 +62,12 @@
 
     <changeSet author="fineract" id="wcl-0006-3">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
-            <columnExists tableName="m_wc_loan" columnName="expected_disbursedon_date"/>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <columnExists tableName="m_wc_loan" columnName="expected_disbursedon_date"/>
+                <columnExists tableName="m_wc_loan" columnName="disbursedon_date"/>
+                <columnExists tableName="m_wc_loan" columnName="disbursedon_userid"/>
+            </and>
         </preConditions>
         <dropColumn tableName="m_wc_loan">
             <column name="expected_disbursedon_date"/>
