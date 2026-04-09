@@ -42,10 +42,15 @@
 
     <changeSet id="wclp-0017-2" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan_product"/>
-            <not>
-                <columnExists tableName="m_wc_loan_product" columnName="breach_id"/>
-            </not>
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_product" columnName="breach_id"/>
+                </not>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_product" foreignKeyName="FK_m_wc_loan_product_breach"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_wc_loan_product">
             <column name="breach_id" type="BIGINT"/>
@@ -71,10 +76,15 @@
 
     <changeSet id="wclp-0017-4-add-breach-id-to-wc-loan" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan"/>
-            <not>
-                <columnExists tableName="m_wc_loan" columnName="breach_id"/>
-            </not>
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="breach_id"/>
+                </not>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan" foreignKeyName="FK_m_wc_loan_breach"/>
+                </not>
+            </and>
         </preConditions>
         <addColumn tableName="m_wc_loan">
             <column name="breach_id" type="BIGINT"/>

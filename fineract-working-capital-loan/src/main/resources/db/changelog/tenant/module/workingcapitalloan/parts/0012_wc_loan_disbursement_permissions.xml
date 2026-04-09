@@ -24,7 +24,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <!-- Permissions for Working Capital Loan disbursement operations -->
-    <changeSet author="fineract" id="wcl-0009-1">
+    <changeSet author="fineract" id="wcl-0012-1">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM m_permission WHERE code = 'DISBURSE_WORKINGCAPITALLOAN';
@@ -39,7 +39,7 @@
         </insert>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0009-2">
+    <changeSet author="fineract" id="wcl-0012-2">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM m_permission WHERE code = 'DISBURSALUNDO_WORKINGCAPITALLOAN';

@@ -272,8 +272,13 @@
     <!-- Add foreign keys for m_loan_originator -->
     <changeSet id="loan-origination-012" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator"/>
-            <columnExists tableName="m_loan_originator" columnName="originator_type_cv_id"/>
+            <and>
+                <tableExists tableName="m_loan_originator"/>
+                <columnExists tableName="m_loan_originator" columnName="originator_type_cv_id"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator" foreignKeyName="FK_loan_originator_type_cv"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseTableName="m_loan_originator" baseColumnNames="originator_type_cv_id"
                                  referencedTableName="m_code_value" referencedColumnNames="id"
@@ -282,8 +287,13 @@
 
     <changeSet id="loan-origination-013" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator"/>
-            <columnExists tableName="m_loan_originator" columnName="channel_type_cv_id"/>
+            <and>
+                <tableExists tableName="m_loan_originator"/>
+                <columnExists tableName="m_loan_originator" columnName="channel_type_cv_id"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator" foreignKeyName="FK_loan_originator_channel_cv"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseTableName="m_loan_originator" baseColumnNames="channel_type_cv_id"
                                  referencedTableName="m_code_value" referencedColumnNames="id"
@@ -291,14 +301,30 @@
     </changeSet>
 
     <!-- Add FK for audit columns on m_loan_originator -->
-    <changeSet id="loan-origination-014" author="fineract">
+    <changeSet id="loan-origination-014-1" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator"/>
+            <and>
+                <tableExists tableName="m_loan_originator"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator" foreignKeyName="FK_loan_originator_created_by"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by" baseTableName="m_loan_originator"
                                  constraintName="FK_loan_originator_created_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id" referencedTableName="m_appuser" validate="true"/>
+    </changeSet>
+
+    <changeSet id="loan-origination-014-2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_loan_originator"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator" foreignKeyName="FK_loan_originator_modified_by"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="last_modified_by" baseTableName="m_loan_originator"
                                  constraintName="FK_loan_originator_modified_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT"
@@ -374,7 +400,12 @@
     <!-- Add foreign keys for m_loan_originator_mapping -->
     <changeSet id="loan-origination-016" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator_mapping"/>
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator_mapping" foreignKeyName="FK_loan_originator_mapping_loan"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseTableName="m_loan_originator_mapping" baseColumnNames="loan_id"
                                  referencedTableName="m_loan" referencedColumnNames="id"
@@ -383,7 +414,12 @@
 
     <changeSet id="loan-origination-017" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator_mapping"/>
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator_mapping" foreignKeyName="FK_loan_originator_mapping_originator"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseTableName="m_loan_originator_mapping" baseColumnNames="originator_id"
                                  referencedTableName="m_loan_originator" referencedColumnNames="id"
@@ -391,14 +427,30 @@
     </changeSet>
 
     <!-- Add FK for audit columns on m_loan_originator_mapping -->
-    <changeSet id="loan-origination-018" author="fineract">
+    <changeSet id="loan-origination-018-1" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator_mapping"/>
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator_mapping" foreignKeyName="FK_loan_originator_mapping_created_by"/>
+                </not>
+            </and>
         </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by" baseTableName="m_loan_originator_mapping"
                                  constraintName="FK_loan_originator_mapping_created_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id" referencedTableName="m_appuser" validate="true"/>
+    </changeSet>
+
+    <changeSet id="loan-origination-018-2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_loan_originator_mapping" foreignKeyName="FK_loan_originator_mapping_modified_by"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="last_modified_by" baseTableName="m_loan_originator_mapping"
                                  constraintName="FK_loan_originator_mapping_modified_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT"
@@ -408,7 +460,12 @@
     <!-- Add unique constraint for loan-originator mapping (prevent duplicate assignments) -->
     <changeSet id="loan-origination-019" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator_mapping"/>
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <indexExists tableName="m_loan_originator_mapping" indexName="UQ_loan_originator_mapping_loan_originator"/>
+                </not>
+            </and>
         </preConditions>
         <addUniqueConstraint tableName="m_loan_originator_mapping" columnNames="loan_id, originator_id"
                              constraintName="UQ_loan_originator_mapping_loan_originator"/>
@@ -417,7 +474,12 @@
     <!-- Add indexes -->
     <changeSet id="loan-origination-020" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator"/>
+            <and>
+                <tableExists tableName="m_loan_originator"/>
+                <not>
+                    <indexExists tableName="m_loan_originator" indexName="idx_loan_originator_status"/>
+                </not>
+            </and>
         </preConditions>
         <createIndex tableName="m_loan_originator" indexName="idx_loan_originator_status">
             <column name="status"/>
@@ -426,7 +488,12 @@
 
     <changeSet id="loan-origination-021" author="fineract">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_loan_originator_mapping"/>
+            <and>
+                <tableExists tableName="m_loan_originator_mapping"/>
+                <not>
+                    <indexExists tableName="m_loan_originator_mapping" indexName="idx_loan_originator_mapping_originator"/>
+                </not>
+            </and>
         </preConditions>
         <createIndex tableName="m_loan_originator_mapping" indexName="idx_loan_originator_mapping_originator">
             <column name="originator_id"/>

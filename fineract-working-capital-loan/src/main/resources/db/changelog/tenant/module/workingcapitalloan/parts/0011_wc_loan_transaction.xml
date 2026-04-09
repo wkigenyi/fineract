@@ -24,7 +24,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <!-- Working Capital Loan Transaction: basic details only -->
-    <changeSet author="fineract" id="wcl-0008-1">
+    <changeSet author="fineract" id="wcl-0011-1">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_wc_loan_transaction"/>
@@ -67,7 +67,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-2-mysql" context="mysql">
+    <changeSet author="fineract" id="wcl-0011-2-mysql" context="mysql">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -84,7 +84,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-2-pg" context="postgresql">
+    <changeSet author="fineract" id="wcl-0011-2-pg" context="postgresql">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -101,7 +101,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-3">
+    <changeSet author="fineract" id="wcl-0011-3">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -112,7 +112,7 @@
                                  constraintName="FK_m_wc_loan_transaction_payment_detail" referencedTableName="m_payment_detail" referencedColumnNames="id"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-4">
+    <changeSet author="fineract" id="wcl-0011-4">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <columnExists tableName="m_wc_loan_transaction" columnName="classification_cv_id"/>
@@ -124,7 +124,7 @@
                                  constraintName="FK_m_wc_loan_transaction_classification_cv" referencedTableName="m_code_value" referencedColumnNames="id"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-5">
+    <changeSet author="fineract" id="wcl-0011-5">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -137,7 +137,7 @@
                                  constraintName="FK_m_wc_loan_transaction_last_modified_by" referencedTableName="m_appuser" referencedColumnNames="id"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-6">
+    <changeSet author="fineract" id="wcl-0011-6">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -149,7 +149,7 @@
         </createIndex>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-6b">
+    <changeSet author="fineract" id="wcl-0011-6b">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction"/>
             <not>
@@ -165,16 +165,21 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-6c">
+    <changeSet author="fineract" id="wcl-0011-6c">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="m_wc_loan_transaction"/>
-            <columnExists tableName="m_wc_loan_transaction" columnName="reversal_external_id"/>
+            <and>
+                <tableExists tableName="m_wc_loan_transaction"/>
+                <columnExists tableName="m_wc_loan_transaction" columnName="reversal_external_id"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_transaction" indexName="wc_loan_transaction_reversal_external_id_UNIQUE"/>
+                </not>
+            </and>
         </preConditions>
         <addUniqueConstraint tableName="m_wc_loan_transaction" columnNames="reversal_external_id"
                              constraintName="wc_loan_transaction_reversal_external_id_UNIQUE"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-10">
+    <changeSet author="fineract" id="wcl-0011-10">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_wc_loan_transaction_allocation"/>
@@ -203,7 +208,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-11-mysql" context="mysql">
+    <changeSet author="fineract" id="wcl-0011-11-mysql" context="mysql">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction_allocation"/>
             <not>
@@ -220,7 +225,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-11-pg" context="postgresql">
+    <changeSet author="fineract" id="wcl-0011-11-pg" context="postgresql">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction_allocation"/>
             <not>
@@ -237,7 +242,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-12">
+    <changeSet author="fineract" id="wcl-0011-12">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction_allocation"/>
             <not>
@@ -250,7 +255,7 @@
                                  constraintName="FK_m_wc_loan_transaction_allocation_last_modified_by" referencedTableName="m_appuser" referencedColumnNames="id"/>
     </changeSet>
 
-    <changeSet author="fineract" id="wcl-0008-13">
+    <changeSet author="fineract" id="wcl-0011-13">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="m_wc_loan_transaction_allocation"/>
             <not>

@@ -22,13 +22,43 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="fineract" id="983">
+    <changeSet author="fineract" id="983-1">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_selfservice_user_client_mapping"/>
+        </preConditions>
         <dropTable tableName="m_selfservice_user_client_mapping" cascadeConstraints="true"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-2">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_selfservice_beneficiaries_tpt"/>
+        </preConditions>
         <dropTable tableName="m_selfservice_beneficiaries_tpt" cascadeConstraints="true"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-3">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_pocket_accounts_mapping"/>
+        </preConditions>
         <dropTable tableName="m_pocket_accounts_mapping" cascadeConstraints="true"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-4">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="m_pocket"/>
+        </preConditions>
         <dropTable tableName="m_pocket" cascadeConstraints="true"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-5">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="client_device_registration"/>
+        </preConditions>
         <dropTable tableName="client_device_registration" cascadeConstraints="true"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-6">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="m_appuser" columnName="is_self_service_user"/>
+        </preConditions>
         <dropColumn tableName="m_appuser" columnName="is_self_service_user"/>
+    </changeSet>
+    <changeSet author="fineract" id="983-7">
         <update tableName="stretchy_parameter">
             <column name="parameter_sql" value="select  r.id as report_id, r.report_name, r.report_type, r.report_subtype, r.report_category,&#10;rp.id as parameter_id, rp.report_parameter_name, p.parameter_name&#10;  from stretchy_report r&#10;  left join stretchy_report_parameter rp on rp.report_id = r.id &#10;  left join stretchy_parameter p on p.id = rp.parameter_id&#10;  where r.use_report is true&#10;  and exists&#10;  ( select 'f'&#10;  from m_appuser_role ur &#10;  join m_role rr on rr.id = ur.role_id&#10;  join m_role_permission rp on rp.role_id = rr.id&#10;  join m_permission p on p.id = rp.permission_id&#10;  where ur.appuser_id = ${currentUserId}&#10;  and (p.code in ('ALL_FUNCTIONS_READ', 'ALL_FUNCTIONS') or p.code = concat('READ_', r.report_name)) )&#10;  order by r.report_category, r.report_name, rp.id"/>
             <where>id='1001' AND parameter_name='FullReportList'</where>

@@ -24,6 +24,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name = 'allow-force-withdrawal-on-savings-account'</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="allow-force-withdrawal-on-savings-account"/>
             <column name="value" valueNumeric="0"/>
@@ -31,7 +34,12 @@
             <column name="is_trap_door" valueBoolean="false"/>
             <column name="description" value="If enabled, allows withdrawals to put the account into negative balance up to the configured limit."/>
         </insert>
+    </changeSet>
 
+    <changeSet author="fineract" id="1-1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM c_configuration WHERE name = 'force-withdrawal-on-savings-account-limit'</sqlCheck>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="force-withdrawal-on-savings-account-limit"/>
             <column name="value" valueNumeric="0"/>
@@ -39,7 +47,12 @@
             <column name="is_trap_door" valueBoolean="false"/>
             <column name="description" value="The maximum negative balance allowed when force withdrawal is enabled."/>
         </insert>
+    </changeSet>
 
+    <changeSet author="fineract" id="1-2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'FORCE_WITHDRAWAL_SAVINGSACCOUNT'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="portfolio"/>
             <column name="code" value="FORCE_WITHDRAWAL_SAVINGSACCOUNT"/>
@@ -47,7 +60,12 @@
             <column name="action_name" value="FORCE_WITHDRAWAL"/>
             <column name="can_maker_checker" valueBoolean="true"/>
         </insert>
+    </changeSet>
 
+    <changeSet author="fineract" id="1-3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'FORCE_WITHDRAWAL_SAVINGSACCOUNT_CHECKER'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="portfolio"/>
             <column name="code" value="FORCE_WITHDRAWAL_SAVINGSACCOUNT_CHECKER"/>
@@ -66,6 +84,9 @@
         </sql>
     </changeSet>
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type = 'SavingsAccountForceWithdrawalBusinessEvent'</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="SavingsAccountForceWithdrawalBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>

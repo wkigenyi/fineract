@@ -23,17 +23,32 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
     <changeSet author="fineract" id="1">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_external_event_configuration WHERE type = 'SavingsAccountsStayedLockedBusinessEvent'</sqlCheck>
+        </preConditions>
         <insert tableName="m_external_event_configuration">
             <column name="type" value="SavingsAccountsStayedLockedBusinessEvent"/>
             <column name="enabled" valueBoolean="false"/>
         </insert>
     </changeSet>
+
     <changeSet author="fineract" id="2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="m_savings_account" columnName="last_closed_business_date"/>
+            </not>
+        </preConditions>
         <addColumn tableName="m_savings_account">
             <column name="last_closed_business_date" type="DATE"/>
         </addColumn>
     </changeSet>
+
     <changeSet author="fineract" id="3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="FK_savings_account_last_closed_business_date" tableName="m_savings_account"/>
+            </not>
+        </preConditions>
         <createIndex indexName="FK_savings_account_last_closed_business_date" tableName="m_savings_account">
             <column name="last_closed_business_date"/>
         </createIndex>

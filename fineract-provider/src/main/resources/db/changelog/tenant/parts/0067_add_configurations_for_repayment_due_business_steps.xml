@@ -27,7 +27,15 @@
             SELECT SETVAL('c_configuration_id_seq', COALESCE(MAX(id), 0)+1, false ) FROM c_configuration;
         </sql>
     </changeSet>
-    <changeSet author="fineract" id="2">
+    <changeSet author="fineract" id="2" runOnChange="true" failOnError="false">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="c_configuration" columnName="name" />
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM c_configuration WHERE name = 'days-before-repayment-is-due'
+                </sqlCheck>
+            </not>
+        </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="days-before-repayment-is-due"/>
             <column name="value" valueNumeric="1"/>

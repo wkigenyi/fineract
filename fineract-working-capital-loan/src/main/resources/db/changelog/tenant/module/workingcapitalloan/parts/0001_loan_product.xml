@@ -141,6 +141,17 @@
 
     <!-- Add UTC datetime columns for audit fields (MySQL) -->
     <changeSet author="fineract" id="wclp-0001-4" context="mysql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_payment_allocation_rule"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_product_payment_allocation_rule" columnName="created_on_utc"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan_product_payment_allocation_rule" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_product_payment_allocation_rule">
             <column name="created_on_utc" type="DATETIME(6)">
                 <constraints nullable="false"/>
@@ -153,6 +164,17 @@
 
     <!-- Add UTC datetime columns for audit fields (PostgreSQL) -->
     <changeSet author="fineract" id="wclp-0001-4-pg" context="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_payment_allocation_rule"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_product_payment_allocation_rule" columnName="created_on_utc"/>
+                </not>
+                <not>
+                    <columnExists tableName="m_wc_loan_product_payment_allocation_rule" columnName="last_modified_on_utc"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_product_payment_allocation_rule">
             <column name="created_on_utc" type="TIMESTAMP WITH TIME ZONE">
                 <constraints nullable="false"/>
@@ -164,19 +186,60 @@
     </changeSet>
 
     <!-- Add foreign key constraints -->
-    <changeSet author="fineract" id="wclp-0001-5">
+    <changeSet author="fineract" id="wclp-0001-5-1">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_product" foreignKeyName="FK_wc_loan_product_fund"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="fund_id" baseTableName="m_wc_loan_product"
                                  constraintName="FK_wc_loan_product_fund" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
                                  referencedTableName="m_fund" validate="true"/>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-5-2">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_product" foreignKeyName="FK_wc_loan_product_delinquency_bucket"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="delinquency_bucket_classification_id" baseTableName="m_wc_loan_product"
                                  constraintName="FK_wc_loan_product_delinquency_bucket" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
                                  referencedTableName="m_delinquency_bucket" validate="true"/>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-5-3">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_payment_allocation_rule"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_product_payment_allocation_rule" foreignKeyName="FK_wc_loan_product_payment_allocation_rule_created_by"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="created_by" baseTableName="m_wc_loan_product_payment_allocation_rule"
                                  constraintName="FK_wc_loan_product_payment_allocation_rule_created_by" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
                                  referencedTableName="m_appuser" validate="true"/>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-5-4">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_payment_allocation_rule"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyTableName="m_wc_loan_product_payment_allocation_rule" foreignKeyName="FK_wc_loan_product_payment_allocation_rule_last_modified_by"/>
+                </not>
+            </and>
+        </preConditions>
         <addForeignKeyConstraint baseColumnNames="last_modified_by" baseTableName="m_wc_loan_product_payment_allocation_rule"
                                  constraintName="FK_wc_loan_product_payment_allocation_rule_last_modified_by" deferrable="false"
                                  initiallyDeferred="false"
@@ -185,22 +248,66 @@
     </changeSet>
 
     <!-- Add indexes -->
-    <changeSet author="fineract" id="wclp-0001-6">
+    <changeSet author="fineract" id="wclp-0001-6-1">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_product" indexName="IND_wc_loan_product_fund_id"/>
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_wc_loan_product" indexName="IND_wc_loan_product_fund_id">
             <column name="fund_id"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-6-2">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_product" indexName="IND_wc_loan_product_external_id"/>
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_wc_loan_product" indexName="IND_wc_loan_product_external_id">
             <column name="external_id"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-6-3">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_payment_allocation_rule"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_product_payment_allocation_rule" indexName="IND_wc_loan_product_payment_allocation_rule_product_id"/>
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_wc_loan_product_payment_allocation_rule" indexName="IND_wc_loan_product_payment_allocation_rule_product_id">
             <column name="wc_loan_product_id"/>
         </createIndex>
+    </changeSet>
+
+    <changeSet author="fineract" id="wclp-0001-6-4">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product_configurable_attributes"/>
+                <not>
+                    <indexExists tableName="m_wc_loan_product_configurable_attributes" indexName="IND_wc_loan_product_configurable_attributes_product_id"/>
+                </not>
+            </and>
+        </preConditions>
         <createIndex tableName="m_wc_loan_product_configurable_attributes" indexName="IND_wc_loan_product_configurable_attributes_product_id">
             <column name="wc_loan_product_id"/>
         </createIndex>
     </changeSet>
 
-    <changeSet id="wclp-0001-7" author="fineract">
+    <changeSet id="wclp-0001-7-1" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'READ_WORKINGCAPITALLOANPRODUCT'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="organisation"/>
             <column name="code" value="READ_WORKINGCAPITALLOANPRODUCT"/>
@@ -208,6 +315,12 @@
             <column name="action_name" value="READ"/>
             <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
+    </changeSet>
+
+    <changeSet id="wclp-0001-7-2" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'CREATE_WORKINGCAPITALLOANPRODUCT'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="organisation"/>
             <column name="code" value="CREATE_WORKINGCAPITALLOANPRODUCT"/>
@@ -215,6 +328,12 @@
             <column name="action_name" value="CREATE"/>
             <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
+    </changeSet>
+
+    <changeSet id="wclp-0001-7-3" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'UPDATE_WORKINGCAPITALLOANPRODUCT'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="organisation"/>
             <column name="code" value="UPDATE_WORKINGCAPITALLOANPRODUCT"/>
@@ -222,6 +341,12 @@
             <column name="action_name" value="UPDATE"/>
             <column name="can_maker_checker" valueBoolean="false"/>
         </insert>
+    </changeSet>
+
+    <changeSet id="wclp-0001-7-4" author="fineract">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM m_permission WHERE code = 'DELETE_WORKINGCAPITALLOANPRODUCT'</sqlCheck>
+        </preConditions>
         <insert tableName="m_permission">
             <column name="grouping" value="organisation"/>
             <column name="code" value="DELETE_WORKINGCAPITALLOANPRODUCT"/>

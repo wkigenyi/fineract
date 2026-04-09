@@ -23,14 +23,30 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
     <!-- Add Delinquency Grace columns Product -->
-    <changeSet author="fineract" id="wcl-0011-1">
+    <changeSet author="fineract" id="wcl-0013-1">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan_product"/>
+                <not>
+                    <columnExists tableName="m_wc_loan_product" columnName="delinquency_grace_days"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan_product">
             <column name="delinquency_grace_days" type="INT" />
             <column name="delinquency_start_type" type="VARCHAR(20)" />
         </addColumn>
     </changeSet>
     <!-- Add Delinquency Grace columns Account -->
-    <changeSet author="fineract" id="wcl-0011-2">
+    <changeSet author="fineract" id="wcl-0013-2">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="m_wc_loan"/>
+                <not>
+                    <columnExists tableName="m_wc_loan" columnName="delinquency_grace_days"/>
+                </not>
+            </and>
+        </preConditions>
         <addColumn tableName="m_wc_loan">
             <column name="delinquency_grace_days" type="INT" />
             <column name="delinquency_start_type" type="VARCHAR(20)" />
