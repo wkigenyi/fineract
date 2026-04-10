@@ -21,6 +21,11 @@ package org.apache.fineract.portfolio.shareaccounts.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 public interface ShareAccountRepository extends JpaRepository<ShareAccount, Long>, JpaSpecificationExecutor<ShareAccount> {
 
+    @Query("SELECT SUM(a.totalSharesApproved) FROM ShareAccount a WHERE a.shareProduct.id = :productId")
+    Long getTotalSubscribedShares(@Param("productId") Long productId);
 }

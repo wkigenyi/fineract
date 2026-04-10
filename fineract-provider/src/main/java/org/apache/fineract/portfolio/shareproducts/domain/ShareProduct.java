@@ -404,17 +404,6 @@ public class ShareProduct extends AbstractAuditableCustom {
         return marketValue;
     }
 
-    public void addSubscribedShares(final Long subscribedShares) {
-        if (this.totalSubscribedShares == null) {
-            this.totalSubscribedShares = 0L;
-        }
-        this.totalSubscribedShares += subscribedShares;
-    }
-
-    public void removeSubscribedShares(final Long subscribedShares) {
-        this.totalSubscribedShares -= subscribedShares;
-    }
-
     public Long getSubscribedShares() {
         return this.totalSubscribedShares;
     }
@@ -429,5 +418,8 @@ public class ShareProduct extends AbstractAuditableCustom {
 
     public Long getDefaultClientShares() {
         return this.nominalShares;
+    }
+    public void recalculateSummary(final Long subscribedShares) {
+        this.totalSubscribedShares = subscribedShares;
     }
 }

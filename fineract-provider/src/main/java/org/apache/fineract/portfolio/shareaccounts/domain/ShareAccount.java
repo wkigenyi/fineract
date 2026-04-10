@@ -252,22 +252,8 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     public void addTransaction(final ShareAccountTransaction transaction) {
         transaction.setShareAccount(this);
-        if (transaction.isPendingForApprovalTransaction()) {
-            if (this.totalSharesPending == null) {
-                this.totalSharesPending = transaction.getTotalShares();
-            } else {
-                this.totalSharesPending += transaction.getTotalShares();
-            }
-
-        } else if (transaction.isPurchasTransaction()) {
-            if (this.totalSharesApproved == null) {
-                this.totalSharesApproved = transaction.getTotalShares();
-            } else {
-                this.totalSharesApproved += transaction.getTotalShares();
-            }
-        }
-
         this.shareAccountTransactions.add(transaction);
+        recalculateSummary();
     }
 
     public boolean setAllowDividendCalculationForInactiveClients(Boolean allowDividendCalculationForInactiveClients) {
@@ -384,16 +370,8 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     public void addAdditionalPurchasedShares(ShareAccountTransaction purchased) {
         purchased.setShareAccount(this);
-        if (purchased.isRedeemTransaction()) {
-            this.totalSharesApproved -= purchased.getTotalShares();
-        } else {
-            if (this.totalSharesPending == null) {
-                this.totalSharesPending = purchased.getTotalShares();
-            } else {
-                this.totalSharesPending += purchased.getTotalShares();
-            }
-        }
         this.shareAccountTransactions.add(purchased);
+        recalculateSummary();
     }
 
     public void addShareAccountCharge(ShareAccountCharge charge) {
@@ -408,8 +386,7 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
             transaction.approve();
         }
         this.status = ShareAccountStatusType.APPROVED.getValue();
-        this.totalSharesApproved = this.totalSharesPending;
-        this.totalSharesPending = null;
+        recalculateSummary();
     }
 
     public void activate(final LocalDate approvedDate, final AppUser approvedUser) {
@@ -426,36 +403,31 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
         this.rejectedBy = null;
         this.closedDate = null;
         this.closedBy = null;
-        this.totalSharesApproved = null;
-        Long tempTotalShares = Long.valueOf(0);
         for (ShareAccountTransaction transaction : this.shareAccountTransactions) {
             if (transaction.isPurchasTransaction()) {
                 transaction.undoApprove();
-                tempTotalShares += transaction.getTotalShares();
             }
         }
-        this.totalSharesPending = tempTotalShares;
+        recalculateSummary();
     }
 
     public void reject(final LocalDate rejectedDate, final AppUser rejectedUser) {
         this.rejectedDate = rejectedDate;
         this.rejectedBy = rejectedUser;
         this.status = ShareAccountStatusType.REJECTED.getValue();
-        this.totalSharesPending = null;
-        this.totalSharesApproved = null;
         for (ShareAccountTransaction transaction : this.shareAccountTransactions) {
             if (transaction.isPendingForApprovalTransaction()) {
                 transaction.reject();
             }
         }
+        recalculateSummary();
     }
 
     public void close(final LocalDate closedDate, final AppUser closedBy) {
         this.closedDate = closedDate;
         this.closedBy = closedBy;
         this.status = ShareAccountStatusType.CLOSED.getValue();
-        this.totalSharesPending = null;
-        this.totalSharesApproved = null;
+        recalculateSummary();
     }
 
     public String getAccountNumber() {
@@ -497,12 +469,7 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
     }
 
     public void updateApprovedShares(Long shares) {
-        if (this.totalSharesApproved == null) {
-            this.totalSharesApproved = shares;
-        } else {
-            this.totalSharesApproved += shares;
-            this.totalSharesPending -= shares;
-        }
+        recalculateSummary();
     }
 
     public Long getTotalApprovedShares() {
@@ -548,8 +515,7 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
         for (ShareAccountTransaction transaction : this.shareAccountTransactions) {
             transaction.setActive(false);
         }
-        this.totalSharesApproved = Long.valueOf(0);
-        this.totalSharesPending = Long.valueOf(0);
+        recalculateSummary();
     }
 
     public void removeCharges() {
@@ -576,5 +542,31 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
 
     public Integer status() {
         return this.status;
+    }
+
+    public void recalculateSummary() {
+        this.totalSharesApproved = 0L;
+        this.totalSharesPending = 0L;
+        if (this.status != null && !(this.status.equals(ShareAccountStatusType.REJECTED.getValue()) || this.status.equals(ShareAccountStatusType.CLOSED.getValue()))) {
+            for (final ShareAccountTransaction transaction : this.shareAccountTransactions) {
+                if (transaction.isActive()) {
+                    if (transaction.isPurchasTransaction()) {
+                        this.totalSharesApproved += transaction.getTotalShares();
+                    } else if (transaction.isRedeemTransaction()) {
+                        this.totalSharesApproved -= transaction.getTotalShares();
+                    } else if (transaction.isPendingForApprovalTransaction()) {
+                        this.totalSharesPending += transaction.getTotalShares();
+                    }
+                }
+            }
+        }
+
+        if (this.totalSharesApproved == 0L) {
+            this.totalSharesApproved = null;
+        }
+
+        if (this.totalSharesPending == 0L) {
+            this.totalSharesPending = null;
+        }
     }
 }

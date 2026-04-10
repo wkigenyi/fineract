@@ -43,4 +43,8 @@ public class ShareAccountRepositoryWrapper {
     public void saveAndFlush(final ShareAccount shareAccount) {
         this.shareAccountRepository.saveAndFlush(shareAccount);
     }
+
+    public Long getTotalSubscribedShares(final Long productId) {
+        return this.shareAccountRepository.getTotalSubscribedShares(productId);
+    }
 }
