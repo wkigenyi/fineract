@@ -324,8 +324,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 }
             }
             ShareProduct shareProduct = account.getShareProduct();
-            shareProduct.addSubscribedShares(totalSubsribedShares);
-            this.shareProductRepository.save(shareProduct);
+            recalculateShareProductSummary(shareProduct);
 
             this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, journalTransactions));
 
@@ -502,8 +501,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 }
                 if (!totalSubscribedShares.equals(Long.valueOf(0))) {
                     ShareProduct shareProduct = account.getShareProduct();
-                    shareProduct.addSubscribedShares(totalSubscribedShares);
-                    this.shareProductRepository.save(shareProduct);
+                    recalculateShareProductSummary(shareProduct);
                 }
             }
             return new CommandProcessingResultBuilder() //
@@ -565,8 +563,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 Long redeemShares = transaction.getTotalShares();
                 ShareProduct shareProduct = account.getShareProduct();
                 // remove the redeem shares from total subscribed shares
-                shareProduct.removeSubscribedShares(redeemShares);
-                this.shareProductRepository.saveAndFlush(shareProduct);
+                recalculateShareProductSummary(shareProduct);
 
                 Set<ShareAccountTransaction> transactions = new HashSet<>();
                 transactions.add(transaction);
@@ -644,5 +641,11 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         final CommandProcessingResult holdResult = this.savingsAccountWritePlatformService
                 .holdAmount(account.getSavingsAccount().getId(), holdCommand);
         transaction.updateSavingsTransactionId(holdResult.getResourceId());
+    }
+
+    private void recalculateShareProductSummary(final ShareProduct shareProduct) {
+        Long totalSubscribedShares = this.shareAccountRepository.getTotalSubscribedShares(shareProduct.getId());
+        shareProduct.recalculateSummary(totalSubscribedShares);
+        this.shareProductRepository.save(shareProduct);
     }
 }
