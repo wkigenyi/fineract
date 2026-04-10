@@ -29,12 +29,9 @@
     </changeSet>
     <changeSet author="fineract" id="2" runOnChange="true" failOnError="false">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists tableName="c_configuration" columnName="name" />
-                <sqlCheck expectedResult="0">
-                    SELECT COUNT(*) FROM c_configuration WHERE name = 'days-before-repayment-is-due'
-                </sqlCheck>
-            </not>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM c_configuration WHERE name = 'days-before-repayment-is-due'
+            </sqlCheck>
         </preConditions>
         <insert tableName="c_configuration">
             <column name="name" value="days-before-repayment-is-due"/>

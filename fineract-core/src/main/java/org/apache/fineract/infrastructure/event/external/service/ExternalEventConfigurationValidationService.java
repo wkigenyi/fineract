@@ -23,6 +23,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -73,13 +74,19 @@ public class ExternalEventConfigurationValidationService implements Initializing
             throws ExternalEventConfigurationNotFoundException {
         log.info("Validating external event configuration for {}", tenant.getTenantIdentifier());
         List<String> eventConfigurations = getExternalEventConfigurationsForTenant(tenant);
-        if (log.isDebugEnabled()) {
-            log.debug("Missing from eventClasses: {}", CollectionUtils.subtract(eventClasses, eventConfigurations));
-            log.debug("Missing from eventConfigurations: {}", CollectionUtils.subtract(eventConfigurations, eventClasses));
-        }
+        Collection<String> missingFromConfigurations = CollectionUtils.subtract(eventClasses, eventConfigurations);
+        Collection<String> missingFromClasses = CollectionUtils.subtract(eventConfigurations, eventClasses);
 
-        if (eventClasses.size() != eventConfigurations.size()) {
-            throw new ExternalEventConfigurationNotFoundException();
+        if (!missingFromConfigurations.isEmpty() || !missingFromClasses.isEmpty()) {
+            if (!missingFromConfigurations.isEmpty()) {
+                log.error("Missing from database configuration: {}", missingFromConfigurations);
+            }
+            if (!missingFromClasses.isEmpty()) {
+                log.error("Missing from classpath classes: {}", missingFromClasses);
+            }
+            throw new ExternalEventConfigurationNotFoundException("Mismatch detected! "
+                    + (missingFromConfigurations.isEmpty() ? "" : "Missing configurations: " + missingFromConfigurations)
+                    + (missingFromClasses.isEmpty() ? "" : " Missing classes: " + missingFromClasses));
         }
 
         for (String eventTypeClass : eventClasses) {
