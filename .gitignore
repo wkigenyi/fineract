@@ -35,5 +35,4 @@ gradleExp/
 .java-version
 
 .windsurf/
-*.log
-fineract-avro-schemas/src/main/avro/
+*.log
