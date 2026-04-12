@@ -25,10 +25,12 @@ public class StandingInstructionDuesData {
 
     private final LocalDate dueDate;
     private final BigDecimal totalDueAmount;
+    private final Integer loanStatus;
 
-    public StandingInstructionDuesData(final LocalDate dueDate, final BigDecimal totalDueAmount) {
+    public StandingInstructionDuesData(final LocalDate dueDate, final BigDecimal totalDueAmount, final Integer loanStatus) {
         this.dueDate = dueDate;
         this.totalDueAmount = totalDueAmount;
+        this.loanStatus = loanStatus;
     }
 
     public LocalDate dueDate() {
@@ -37,6 +39,14 @@ public class StandingInstructionDuesData {
 
     public BigDecimal totalDueAmount() {
         return this.totalDueAmount;
+    }
+
+    public Integer loanStatus() {
+        return this.loanStatus;
+    }
+
+    public boolean isLoanActive() {
+        return Integer.valueOf(300).equals(this.loanStatus);
     }
 
 }
