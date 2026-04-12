@@ -338,6 +338,10 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
                 .append(" where atsi.status=? and " + businessDate + " >= atsi.valid_from and (atsi.valid_till IS NULL or " + businessDate
                         + " < atsi.valid_till) ")
                 .append(" and  (atsi.last_run_date <> " + businessDate + " or atsi.last_run_date IS NULL)")
+                .append(" and (")
+                .append("  (toloanacc.id IS NOT NULL AND toloanacc.loan_status_id = 300) ")
+                .append("  OR (tosavacc.id IS NOT NULL AND tosavacc.status_enum = 300) ")
+                .append(" ) ")
                 .append(" ORDER BY atsi.priority DESC");
         return this.jdbcTemplate.query(sqlBuilder.toString(), this.standingInstructionMapper, status);
     }
@@ -357,8 +361,10 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
     @Override
     public StandingInstructionDuesData retriveLoanDuesData(final Long loanId) {
         final StandingInstructionLoanDuesMapper rm = new StandingInstructionLoanDuesMapper();
-        final String sql = "select " + rm.schema() + " where ml.id= ? and ls.duedate <= " + sqlGenerator.currentBusinessDate()
-                + " and ls.completed_derived <> 1";
+        final String businessDate = sqlGenerator.currentBusinessDate();
+        final String sql = "select " + rm.schema() + " from m_loan ml "
+                + "left join m_loan_repayment_schedule ls on ls.loan_id = ml.id and ls.duedate <= " + businessDate
+                + " and ls.completed_derived <> 1 where ml.id= ? group by ml.id, ml.loan_status_id";
         return this.jdbcTemplate.queryForObject(sql, rm, new Object[] { loanId }); // NOSONAR
     }
 
@@ -538,9 +544,8 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             sqlBuilder.append("sum(ls.fee_charges_amount) as feeAmount,");
             sqlBuilder.append("sum(ls.fee_charges_completed_derived) as feecompleted,");
             sqlBuilder.append("sum(ls.fee_charges_writtenoff_derived) as feeWrittenOff,");
-            sqlBuilder.append("sum(ls.fee_charges_waived_derived) as feeWaived ");
-            sqlBuilder.append("from m_loan_repayment_schedule ls ");
-            sqlBuilder.append(" join m_loan ml on ml.id = ls.loan_id ");
+            sqlBuilder.append("sum(ls.fee_charges_waived_derived) as feeWaived, ");
+            sqlBuilder.append("ml.loan_status_id as loanStatus ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -583,7 +588,9 @@ public class StandingInstructionReadPlatformServiceImpl implements StandingInstr
             final BigDecimal totalOutstanding = principalOutstanding.add(interestOutstanding).add(feeChargesOutstanding)
                     .add(penaltyChargesOutstanding);
 
-            return new StandingInstructionDuesData(dueDate, totalOutstanding);
+            final Integer loanStatus = JdbcSupport.getInteger(rs, "loanStatus");
+
+            return new StandingInstructionDuesData(dueDate, totalOutstanding, loanStatus);
         }
     }
 

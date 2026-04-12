@@ -25,6 +25,7 @@ import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.tenant.TenantDetailsService;
 import org.apache.fineract.infrastructure.jobs.domain.ScheduledJobDetail;
 import org.apache.fineract.infrastructure.jobs.domain.ScheduledJobRunHistory;
+import org.springframework.batch.core.JobExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
@@ -91,7 +92,11 @@ public class SchedulerJobListener implements JobListener {
                             .append(element.getLineNumber()).append(")");
                 }
                 errorLog = sb.toString();
-
+            } else if (context.getResult() instanceof JobExecution) {
+                final JobExecution jobExecution = (JobExecution) context.getResult();
+                if (jobExecution.getExitStatus() != null) {
+                    errorLog = jobExecution.getExitStatus().getExitDescription();
+                }
             }
             String triggerType = SchedulerServiceConstants.TRIGGER_TYPE_CRON;
             if (context.getMergedJobDataMap().containsKey(SchedulerServiceConstants.TRIGGER_TYPE_REFERENCE)) {
@@ -107,7 +112,7 @@ public class SchedulerJobListener implements JobListener {
 
             final ScheduledJobRunHistory runHistory = new ScheduledJobRunHistory().setScheduledJobDetail(scheduledJobDetails)
                     .setVersion(version).setStartTime(context.getFireTime()).setEndTime(new Date()).setStatus(status)
-                    .setErrorMessage(errorMessage).setTriggerType(triggerType).setErrorLog(errorLog);
+                    .setErrorMessage(truncate(errorMessage, 60000)).setTriggerType(triggerType).setErrorLog(truncate(errorLog, 60000));
 
             this.schedularService.saveOrUpdate(scheduledJobDetails, runHistory);
         } finally {
@@ -128,6 +133,13 @@ public class SchedulerJobListener implements JobListener {
             return exception.getCause();
         }
         return exception;
+    }
+
+    private String truncate(final String text, final int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        return text.substring(0, maxLength - 15) + " [TRUNCATED]";
     }
 
 }

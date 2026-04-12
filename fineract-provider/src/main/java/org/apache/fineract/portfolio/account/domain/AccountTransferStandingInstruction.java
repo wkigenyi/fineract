@@ -280,6 +280,14 @@ public class AccountTransferStandingInstruction extends AbstractPersistableCusto
         this.status = status;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public Integer getStatus() {
+        return this.status;
+    }
+
     /**
      * delete the standing instruction by setting the status to 3 and appending "_deleted_" and the id to the name
      **/
