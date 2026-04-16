@@ -19,7 +19,8 @@
  */
 package org.apache.fineract.portfolio.account.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
@@ -28,6 +29,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.fineract.portfolio.account.domain.AccountAssociationType;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountStatusType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -49,30 +53,43 @@ public class AccountAssociationsReadPlatformServiceImplTest {
     }
 
     @Test
-    public void testRetriveLoanAssociations_HandlesShortFromDatabase() {
+    public void testIsLinkedWithAnyActiveAccount_HandlesShortLoanStatusFromDatabase() {
         List<Map<String, Object>> mockStatusList = new ArrayList<>();
         Map<String, Object> row = new HashMap<>();
-        row.put("type", (short) 1); // Simulates the Short/SmallInt
+        row.put("type", AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue().shortValue());
+        row.put("loanStatus", LoanStatus.ACTIVE.getValue().shortValue());
         mockStatusList.add(row);
 
-        lenient().when(jdbcTemplate.queryForList(anyString(), any(Object[].class))).thenReturn(mockStatusList);
+        lenient().when(jdbcTemplate.queryForList(anyString(), any(Long.class))).thenReturn(mockStatusList);
 
-        assertDoesNotThrow(() -> {
-            service.retriveLoanAssociations(1L, 1);
-        });
+        assertTrue(service.isLinkedWithAnyActiveAccount(1L));
     }
 
     @Test
-    public void testRetriveLoanAssociations_HandlesIntegerFromDatabase() {
+    public void testIsLinkedWithAnyActiveAccount_HandlesShortSavingsStatusFromDatabase() {
         List<Map<String, Object>> mockStatusList = new ArrayList<>();
         Map<String, Object> row = new HashMap<>();
-        row.put("type", 1); // Simulates standard Integer
+        row.put("type", AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue().shortValue());
+        row.put("savingsStatus", SavingsAccountStatusType.ACTIVE.getValue().shortValue());
         mockStatusList.add(row);
 
-        lenient().when(jdbcTemplate.queryForList(anyString(), any(Object[].class))).thenReturn(mockStatusList);
+        lenient().when(jdbcTemplate.queryForList(anyString(), any(Long.class))).thenReturn(mockStatusList);
 
-        assertDoesNotThrow(() -> {
-            service.retriveLoanAssociations(1L, 1);
-        });
+        assertTrue(service.isLinkedWithAnyActiveAccount(1L));
+    }
+
+    @Test
+    public void testIsLinkedWithAnyActiveAccount_ReturnsFalseWhenNoActiveStatuses() {
+        List<Map<String, Object>> mockStatusList = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("type", AccountAssociationType.LINKED_ACCOUNT_ASSOCIATION.getValue());
+        row.put("loanStatus", LoanStatus.CLOSED_OBLIGATIONS_MET.getValue());
+        row.put("savingsStatus", SavingsAccountStatusType.CLOSED.getValue());
+        row.put("active", Boolean.FALSE);
+        mockStatusList.add(row);
+
+        lenient().when(jdbcTemplate.queryForList(anyString(), any(Long.class))).thenReturn(mockStatusList);
+
+        assertFalse(service.isLinkedWithAnyActiveAccount(1L));
     }
 }
