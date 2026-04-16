@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.config.FineractProperties;
@@ -75,7 +74,6 @@ import org.apache.fineract.portfolio.savings.service.SavingsAccountDomainService
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.springframework.transaction.annotation.Transactional;
 
-@RequiredArgsConstructor
 public class AccountTransfersWritePlatformServiceImpl implements AccountTransfersWritePlatformService {
 
     private final AccountTransfersDataValidator accountTransfersDataValidator;
@@ -93,6 +91,32 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private final ExternalIdFactory externalIdFactory;
     private final FineractProperties fineractProperties;
     private final LoanAdjustmentService loanAdjustmentService;
+
+    public AccountTransfersWritePlatformServiceImpl(final AccountTransfersDataValidator accountTransfersDataValidator,
+            final AccountTransferAssembler accountTransferAssembler, final AccountTransferRepository accountTransferRepository,
+            final SavingsAccountAssembler savingsAccountAssembler,
+            final SavingsAccountDomainService savingsAccountDomainService, final LoanAssembler loanAccountAssembler,
+            final LoanAccountDomainService loanAccountDomainService,
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+            final AccountTransferDetailRepository accountTransferDetailRepository,
+            final LoanReadPlatformService loanReadPlatformService, final GSIMRepositoy gsimRepository,
+            final ConfigurationDomainService configurationDomainService, final ExternalIdFactory externalIdFactory,
+            final FineractProperties fineractProperties) {
+        this.accountTransfersDataValidator = accountTransfersDataValidator;
+        this.accountTransferAssembler = accountTransferAssembler;
+        this.accountTransferRepository = accountTransferRepository;
+        this.savingsAccountAssembler = savingsAccountAssembler;
+        this.savingsAccountDomainService = savingsAccountDomainService;
+        this.loanAccountAssembler = loanAccountAssembler;
+        this.loanAccountDomainService = loanAccountDomainService;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
+        this.accountTransferDetailRepository = accountTransferDetailRepository;
+        this.loanReadPlatformService = loanReadPlatformService;
+        this.gsimRepository = gsimRepository;
+        this.configurationDomainService = configurationDomainService;
+        this.externalIdFactory = externalIdFactory;
+        this.fineractProperties = fineractProperties;
+    }
 
     @Transactional
     @Override
@@ -591,11 +615,6 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private boolean isSavingsToSavingsAccountTransfer(final PortfolioAccountType fromAccountType,
             final PortfolioAccountType toAccountType) {
         return PortfolioAccountType.SAVINGS.equals(fromAccountType) && PortfolioAccountType.SAVINGS.equals(toAccountType);
-    }
-
-    private boolean isSavingsToSharesAccountTransfer(final PortfolioAccountType fromAccountType,
-            final PortfolioAccountType toAccountType) {
-        return fromAccountType.isSavingsAccount() && toAccountType.isSharesAccount();
     }
 
     private boolean isSavingsToSharesAccountTransfer(final PortfolioAccountType fromAccountType,

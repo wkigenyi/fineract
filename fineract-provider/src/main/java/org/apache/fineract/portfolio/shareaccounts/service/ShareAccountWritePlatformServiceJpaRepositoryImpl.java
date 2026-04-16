@@ -28,8 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fineract.accounting.journalentry.service.JournalEntryWritePlatformService;
@@ -69,7 +67,6 @@ import org.apache.fineract.portfolio.shareproducts.domain.ShareProductRepository
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
 
-@RequiredArgsConstructor
 public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareAccountWritePlatformService {
 
     private final ShareAccountDataSerializer accountDataSerializer;
@@ -90,6 +87,28 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
+
+    public ShareAccountWritePlatformServiceJpaRepositoryImpl(final ShareAccountDataSerializer accountDataSerializer,
+            final ShareAccountRepositoryWrapper shareAccountRepository, final ShareProductRepositoryWrapper shareProductRepository,
+            final AccountNumberGenerator accountNumberGenerator,
+            final AccountNumberFormatRepositoryWrapper accountNumberFormatRepository,
+            final JournalEntryWritePlatformService journalEntryWritePlatformService, final NoteRepository noteRepository,
+            final BusinessEventNotifierService businessEventNotifierService,
+            final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
+            final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
+        this.accountDataSerializer = accountDataSerializer;
+        this.shareAccountRepository = shareAccountRepository;
+        this.shareProductRepository = shareProductRepository;
+        this.accountNumberGenerator = accountNumberGenerator;
+        this.accountNumberFormatRepository = accountNumberFormatRepository;
+        this.journalEntryWritePlatformService = journalEntryWritePlatformService;
+        this.noteRepository = noteRepository;
+        this.businessEventNotifierService = businessEventNotifierService;
+        this.accountTransfersWritePlatformService = accountTransfersWritePlatformService;
+        this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
+        this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
+    }
 
     @Override
     public CommandProcessingResult createShareAccount(JsonCommand jsonCommand) {
