@@ -114,9 +114,10 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
             final BigDecimal shareValue) {
         final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
         final Integer type = PurchasedSharesStatusType.REDEEMED.getValue();
-        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(totalShares));
+        final long shareCount = totalShares != null ? totalShares : 0L;
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(shareCount));
         BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
-        return new ShareAccountTransaction(transactionDate, totalShares, shareValue, status, type, amount, null, amountPaid, null);
+        return new ShareAccountTransaction(transactionDate, shareCount, shareValue, status, type, amount, null, amountPaid, null);
     }
 
     public static ShareAccountTransaction createChargeTransaction(final LocalDate transactionDate, final ShareAccountCharge charge) {

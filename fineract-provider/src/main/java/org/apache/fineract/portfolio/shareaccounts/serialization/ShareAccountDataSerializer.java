@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
@@ -1046,8 +1047,9 @@ public class ShareAccountDataSerializer {
 
         AppUser approvedUser = this.platformSecurityContext.authenticatedUser();
         final BigDecimal unitPrice = account.getShareProduct().deriveMarketPrice(DateUtils.getBusinessLocalDate());
-        ShareAccountTransaction transaction = ShareAccountTransaction.createRedeemTransaction(closedDate, account.getTotalApprovedShares(),
-                unitPrice);
+        // recalculateSummary() stores 0 approved shares as null; closing must redeem with 0L, not null
+        final Long sharesToRedeemOnClose = Objects.requireNonNullElse(account.getTotalApprovedShares(), 0L);
+        ShareAccountTransaction transaction = ShareAccountTransaction.createRedeemTransaction(closedDate, sharesToRedeemOnClose, unitPrice);
         account.addAdditionalPurchasedShares(transaction);
         account.close(closedDate, approvedUser);
         handleRedeemSharesChargeTransactions(account, transaction);
