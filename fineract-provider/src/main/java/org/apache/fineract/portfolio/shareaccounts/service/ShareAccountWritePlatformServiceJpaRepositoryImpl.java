@@ -21,7 +21,6 @@ package org.apache.fineract.portfolio.shareaccounts.service;
 import jakarta.persistence.PersistenceException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +37,6 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.ErrorHandler;
-import org.apache.fineract.infrastructure.core.serialization.GoogleGsonSerializerHelper;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountApproveBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountCreateBusinessEvent;
@@ -652,26 +650,6 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 "Unknown data integrity issue with resource.");
     }
 
-    private void holdFunds(final ShareAccount account, final ShareAccountTransaction transaction, final JsonCommand jsonCommand) {
-        final Map<String, Object> holdCommandMap = new HashMap<>();
-        BigDecimal totalAmount = transaction.amount();
-        if (transaction.chargeAmount() != null) {
-            totalAmount = totalAmount.add(transaction.chargeAmount());
-        }
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionAmountParamName, totalAmount);
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.transactionDateParamName,
-                transaction.getPurchasedDate().format(DateTimeFormatter.ofPattern(jsonCommand.dateFormat())));
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.reasonForBlockParamName, "Share Purchase Hold");
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.localeParamName, jsonCommand.extractLocale().toString());
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.dateFormatParamName, jsonCommand.dateFormat());
-        holdCommandMap.put(org.apache.fineract.portfolio.savings.SavingsApiConstants.lienAllowedParamName, true);
-
-        final JsonCommand holdCommand = JsonCommand.fromExistingCommand(jsonCommand,
-                GoogleGsonSerializerHelper.createSimpleGson().toJsonTree(holdCommandMap));
-        final CommandProcessingResult holdResult = this.savingsAccountWritePlatformService
-                .holdAmount(account.getSavingsAccount().getId(), holdCommand);
-        transaction.updateSavingsTransactionId(holdResult.getResourceId());
-    }
     private void recalculateShareProductSummary(final ShareProduct shareProduct) {
         Long totalSubscribedShares = this.shareAccountRepository.getTotalSubscribedShares(shareProduct.getId());
         shareProduct.recalculateSummary(totalSubscribedShares);
