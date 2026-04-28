@@ -96,7 +96,8 @@ public class ShareAccountDataSerializer {
 
     private static final Set<String> approvalParameters = new HashSet<>(
             Arrays.asList(ShareAccountApiConstants.locale_paramname, ShareAccountApiConstants.dateformat_paramname,
-                    ShareAccountApiConstants.approveddate_paramname, ShareAccountApiConstants.note_paramname));
+                    ShareAccountApiConstants.approveddate_paramname, ShareAccountApiConstants.note_paramname,
+                    ShareAccountApiConstants.skip_savings_balance_check_on_share_approval_paramname));
 
     private static final Set<String> activateParameters = new HashSet<>(Arrays.asList(ShareAccountApiConstants.locale_paramname,
             ShareAccountApiConstants.dateformat_paramname, ShareAccountApiConstants.activatedate_paramname));
@@ -108,7 +109,8 @@ public class ShareAccountDataSerializer {
     private static final Set<String> addtionalSharesParameters = new HashSet<>(Arrays.asList(ShareAccountApiConstants.locale_paramname,
             ShareAccountApiConstants.requesteddate_paramname, ShareAccountApiConstants.requestedshares_paramname,
             ShareAccountApiConstants.purchasedprice_paramname, ShareAccountApiConstants.dateformat_paramname,
-            ShareAccountApiConstants.use_savings_paramname));
+            ShareAccountApiConstants.use_savings_paramname,
+            ShareAccountApiConstants.skip_savings_balance_check_on_share_approval_paramname));
 
     private static final Set<String> redeemSharesParameters = new HashSet<>(Arrays.asList(ShareAccountApiConstants.locale_paramname,
             ShareAccountApiConstants.requesteddate_paramname, ShareAccountApiConstants.requestedshares_paramname,

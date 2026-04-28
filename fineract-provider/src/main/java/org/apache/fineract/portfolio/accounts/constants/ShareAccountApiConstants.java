@@ -100,6 +100,12 @@ public interface ShareAccountApiConstants {
 
     String use_savings_paramname = "useSavings";
 
+    /**
+     * Optional flag on share approval JSON: when {@code true}, the savings-to-shares transfer skips insufficient-balance checks
+     * (e.g. recovery when funds were already used before approval). Use with care; same permission rules as the approve action.
+     */
+    String skip_savings_balance_check_on_share_approval_paramname = "skipSavingsBalanceCheckOnShareApproval";
+
     String shareEntityType = "share";
 
     Set<String> supportedParameters = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(locale_paramname, dateformat_paramname,

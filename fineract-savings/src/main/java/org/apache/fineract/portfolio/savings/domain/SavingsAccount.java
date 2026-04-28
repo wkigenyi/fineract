@@ -1525,13 +1525,13 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         // In overdraft cases, minRequiredBalance can be in violation after
         // interest posting
         // and should be checked after processing all transactions
-        if (isOverdraft()) {
+        if (!isException && isOverdraft()) {
             if (runningBalance.minus(minRequiredBalance).isLessThanZero() && !isForceWithdrawalAllowed(isForceWithdrawal, runningBalance)) {
                 throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee, transactionAmount);
             }
         }
 
-        if (this.getSavingsHoldAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (!isException && this.getSavingsHoldAmount().compareTo(BigDecimal.ZERO) > 0) {
             if (this.enforceMinRequiredBalance) {
                 if (runningBalance.minus(minRequiredBalance.plus(this.getSavingsHoldAmount())).isLessThanZero()) {
                     throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), withdrawalFee,

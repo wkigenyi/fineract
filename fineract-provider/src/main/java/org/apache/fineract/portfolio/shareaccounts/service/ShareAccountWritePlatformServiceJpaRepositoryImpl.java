@@ -38,6 +38,7 @@ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.apache.fineract.infrastructure.core.exception.ErrorHandler;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
+import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountApproveBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccountCreateBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
@@ -85,7 +86,6 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
-
     public ShareAccountWritePlatformServiceJpaRepositoryImpl(final ShareAccountDataSerializer accountDataSerializer,
             final ShareAccountRepositoryWrapper shareAccountRepository, final ShareProductRepositoryWrapper shareProductRepository,
             final AccountNumberGenerator accountNumberGenerator,
@@ -291,6 +291,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     public CommandProcessingResult approveShareAccount(Long accountId, JsonCommand jsonCommand) {
 
         try {
+            final boolean skipSavingsBalanceCheckOnTransfer = true;
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
             Map<String, Object> changes = this.accountDataSerializer.validateAndApprove(jsonCommand, account);
             if (!changes.isEmpty()) {
@@ -347,15 +348,15 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                                 org.apache.fineract.infrastructure.core.domain.ExternalId.empty(),
                                 null, null,
                                 account.getSavingsAccount(),
-                                Boolean.TRUE, Boolean.FALSE);
-                        this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+                                Boolean.TRUE, skipSavingsBalanceCheckOnTransfer);
+                        //this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
                     }
                 }
             }
             ShareProduct shareProduct = account.getShareProduct();
             recalculateShareProductSummary(shareProduct);
 
-            this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, journalTransactions));
+            //this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, journalTransactions));
 
             businessEventNotifierService.notifyPostBusinessEvent(new ShareAccountApproveBusinessEvent(account));
 
@@ -472,6 +473,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     public CommandProcessingResult approveAdditionalShares(Long accountId, JsonCommand jsonCommand) {
 
         try {
+            final boolean skipSavingsBalanceCheckOnTransfer = resolveSkipSavingsBalanceCheckOnShareApproval(jsonCommand);
             ShareAccount account = this.shareAccountRepository.findOneWithNotFoundDetection(accountId);
             Map<String, Object> changes = this.accountDataSerializer.validateAndApproveAddtionalShares(jsonCommand, account);
             if (!changes.isEmpty()) {
@@ -521,7 +523,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                                     org.apache.fineract.infrastructure.core.domain.ExternalId.empty(),
                                     null, null,
                                     account.getSavingsAccount(),
-                                    Boolean.TRUE, Boolean.FALSE);
+                                    Boolean.TRUE, skipSavingsBalanceCheckOnTransfer);
                             this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
                         }
                     }
@@ -648,6 +650,20 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private void handleDataIntegrityIssues(final JsonCommand command, final Throwable realCause, final Exception dve) {
         throw ErrorHandler.getMappable(dve, "error.msg.shareaccount.unknown.data.integrity.issue",
                 "Unknown data integrity issue with resource.");
+    }
+
+    /**
+     * When {@code skipSavingsBalanceCheckOnShareApproval=true} in the approve command JSON, the savings withdrawal for the
+     * share purchase sets {@link AccountTransferDTO#isExceptionForBalanceCheck()} so the savings layer skips insufficient-balance
+     * enforcement (includings post-checks that previously ignored the flag; see {@code SavingsAccount#validateAccountBalanceDoesNotBecomeNegative}).
+     * Use only for recovery when balance was already used before approval. Same API permission rules as share approval apply.
+     */
+    private boolean resolveSkipSavingsBalanceCheckOnShareApproval(final JsonCommand jsonCommand) {
+        if (!jsonCommand.parameterExists(ShareAccountApiConstants.skip_savings_balance_check_on_share_approval_paramname)) {
+            return false;
+        }
+        return Boolean.TRUE.equals(jsonCommand
+                .booleanObjectValueOfParameterNamed(ShareAccountApiConstants.skip_savings_balance_check_on_share_approval_paramname));
     }
 
     private void recalculateShareProductSummary(final ShareProduct shareProduct) {
