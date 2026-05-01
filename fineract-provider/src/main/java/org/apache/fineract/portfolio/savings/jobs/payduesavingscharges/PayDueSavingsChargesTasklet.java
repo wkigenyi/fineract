@@ -28,6 +28,7 @@ import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidati
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountAnnualFeeData;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountChargeReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountWritePlatformService;
 import org.springframework.batch.core.StepContribution;
@@ -56,6 +57,10 @@ public class PayDueSavingsChargesTasklet implements Tasklet {
                     log.error("Apply Charges due for savings failed for account {} with message: {}",
                             savingsAccountReference.getAccountNo(), error.getDeveloperMessage(), e);
                 }
+            } catch (final InsufficientAccountBalanceException e) {
+                // Expected when balance cannot cover the due charge; do not fail the whole job
+                log.warn("Insufficient balance when applying due savings charge for account {} (savings id {}, charge id {})",
+                        savingsAccountReference.getAccountNo(), savingsAccountReference.getAccountId(), savingsAccountReference.getId(), e);
             } catch (final Exception ex) {
                 exceptions.add(ex);
                 log.error("Apply Charges due for savings failed for account: {}", savingsAccountReference.getAccountNo(), ex);

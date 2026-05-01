@@ -39,6 +39,7 @@ import org.apache.fineract.portfolio.loanaccount.domain.LoanStatus;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformService;
 import org.apache.fineract.portfolio.loanproduct.exception.LinkedAccountRequiredException;
+import org.apache.fineract.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -117,6 +118,10 @@ public class TransferFeeChargeForLoansTasklet implements Tasklet {
     private void transferFeeCharge(final AccountTransferDTO accountTransferDTO, List<Throwable> errors) {
         try {
             accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+        } catch (final InsufficientAccountBalanceException e) {
+            log.warn(
+                    "Insufficient balance when transferring loan charge payment from savings id {} to loan id {} (charge id {})",
+                    accountTransferDTO.getFromAccountId(), accountTransferDTO.getToAccountId(), accountTransferDTO.getChargeId(), e);
         } catch (RuntimeException e) {
             log.error("Exception while paying charge {} for loan id {}", accountTransferDTO.getChargeId(),
                     accountTransferDTO.getToAccountId(), e);
