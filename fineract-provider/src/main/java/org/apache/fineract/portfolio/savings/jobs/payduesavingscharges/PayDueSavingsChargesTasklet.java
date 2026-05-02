@@ -40,8 +40,28 @@ import org.springframework.batch.repeat.RepeatStatus;
 @RequiredArgsConstructor
 public class PayDueSavingsChargesTasklet implements Tasklet {
 
+    private static final String BALANCE_GOING_NEGATIVE_GLOBALISATION_SUBSTRING = "results.in.balance.going.negative";
+
     private final SavingsAccountChargeReadPlatformService savingsAccountChargeReadPlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
+
+    /**
+     * Non-overdraft accounts can fail balance checks via {@link PlatformApiDataValidationException} (negative balance
+     * validation) rather than {@link InsufficientAccountBalanceException}; treat those as skippable for the batch job.
+     */
+    static boolean isSkippableInsufficientBalanceValidation(final PlatformApiDataValidationException e) {
+        final List<ApiParameterError> errors = e.getErrors();
+        if (errors == null || errors.isEmpty()) {
+            return false;
+        }
+        for (final ApiParameterError error : errors) {
+            final String code = error.getUserMessageGlobalisationCode();
+            if (code == null || !code.contains(BALANCE_GOING_NEGATIVE_GLOBALISATION_SUBSTRING)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
@@ -51,11 +71,16 @@ public class PayDueSavingsChargesTasklet implements Tasklet {
             try {
                 savingsAccountWritePlatformService.applyChargeDue(savingsAccountReference.getId(), savingsAccountReference.getAccountId());
             } catch (final PlatformApiDataValidationException e) {
-                exceptions.add(e);
-                final List<ApiParameterError> errors = e.getErrors();
-                for (final ApiParameterError error : errors) {
-                    log.error("Apply Charges due for savings failed for account {} with message: {}",
-                            savingsAccountReference.getAccountNo(), error.getDeveloperMessage(), e);
+                if (isSkippableInsufficientBalanceValidation(e)) {
+                    log.warn("Insufficient balance when applying due savings charge for account {} (savings id {}, charge id {})",
+                            savingsAccountReference.getAccountNo(), savingsAccountReference.getAccountId(), savingsAccountReference.getId(), e);
+                } else {
+                    exceptions.add(e);
+                    final List<ApiParameterError> errors = e.getErrors();
+                    for (final ApiParameterError error : errors) {
+                        log.error("Apply Charges due for savings failed for account {} with message: {}",
+                                savingsAccountReference.getAccountNo(), error.getDeveloperMessage(), e);
+                    }
                 }
             } catch (final InsufficientAccountBalanceException e) {
                 // Expected when balance cannot cover the due charge; do not fail the whole job

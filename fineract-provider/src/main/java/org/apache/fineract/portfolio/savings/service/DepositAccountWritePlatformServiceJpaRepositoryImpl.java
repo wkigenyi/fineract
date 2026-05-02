@@ -108,6 +108,7 @@ import org.apache.fineract.portfolio.savings.domain.SavingsAccountTransactionRep
 import org.apache.fineract.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.apache.fineract.portfolio.savings.exception.TransactionUpdateNotAllowedException;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -1407,7 +1408,7 @@ public class DepositAccountWritePlatformServiceJpaRepositoryImpl implements Depo
 
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void applyChargeDue(final Long savingsAccountChargeId, final Long accountId,
             @SuppressWarnings("unused") final DepositAccountType depositAccountType) {
