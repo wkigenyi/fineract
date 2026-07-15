@@ -1,0 +1,4 @@
+# Avro schemas are source inputs for fineract-avro-schemas.
+# Spotless reformats them during builds/devRun; pin LF so Windows
+# core.autocrlf=true does not mark them as constantly modified.
+*.avsc text eol=lf
