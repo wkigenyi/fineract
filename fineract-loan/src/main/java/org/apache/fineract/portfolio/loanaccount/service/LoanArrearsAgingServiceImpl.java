@@ -32,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.event.business.BusinessEventListener;
 import org.apache.fineract.infrastructure.event.business.domain.loan.LoanAdjustTransactionBusinessEvent;
@@ -237,13 +236,15 @@ public class LoanArrearsAgingServiceImpl implements LoanArrearsAgingService {
                             .add(loanSchedulePeriodData.getFeeChargesDue().subtract(loanSchedulePeriodData.getFeeChargesPaid()));
                     penaltyOverdue = penaltyOverdue
                             .add(loanSchedulePeriodData.getPenaltyChargesDue().subtract(loanSchedulePeriodData.getPenaltyChargesPaid()));
-                    if (DateUtils.isAfter(overDueSince, loanSchedulePeriodData.getDueDate()) && MathUtil
-                            .isGreaterThan(loanSchedulePeriodData.getPrincipalDue(), loanSchedulePeriodData.getPrincipalPaid())) {
+                    // Align with Path A / calculateArrearsForLoan: any unpaid component marks the period overdue
+                    if (DateUtils.isAfter(overDueSince, loanSchedulePeriodData.getDueDate())) {
                         overDueSince = loanSchedulePeriodData.getDueDate();
                     }
                 }
             }
-            if (principalOverdue.compareTo(BigDecimal.ZERO) > 0) {
+            final BigDecimal totalOverdue = principalOverdue.add(interestOverdue).add(feeOverdue).add(penaltyOverdue);
+            // Persist whenever total overdue > 0 (not principal-only). Interest/fee/penalty-only arrears were previously dropped.
+            if (totalOverdue.compareTo(BigDecimal.ZERO) > 0) {
                 String sqlStatement = null;
                 if (isInsertStatement) {
                     sqlStatement = constructInsertStatement(loanId, principalOverdue, interestOverdue, feeOverdue, penaltyOverdue,
