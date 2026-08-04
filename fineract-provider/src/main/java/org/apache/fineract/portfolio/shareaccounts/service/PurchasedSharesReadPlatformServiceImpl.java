@@ -50,7 +50,8 @@ public class PurchasedSharesReadPlatformServiceImpl implements PurchasedSharesRe
             StringBuilder buff = new StringBuilder()
                     .append("saps.id, saps.account_id, saps.transaction_date, saps.total_shares, saps.unit_price, ")
                     .append("saps.status_enum, saps.type_enum, saps.amount, saps.charge_amount as chargeamount, ")
-                    .append("saps.amount_paid as amountPaid").append(" from m_share_account_transactions saps ");
+                    .append("saps.amount_paid as amountPaid, saps.linked_transaction_id as linkedTransactionId")
+                    .append(" from m_share_account_transactions saps ");
             schema = buff.toString();
         }
 
@@ -68,9 +69,10 @@ public class PurchasedSharesReadPlatformServiceImpl implements PurchasedSharesRe
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "amount");
             final BigDecimal chargeAmount = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "chargeamount");
             final BigDecimal amountPaid = JdbcSupport.getBigDecimalDefaultToZeroIfNull(rs, "amountPaid");
+            final Long linkedTransactionId = JdbcSupport.getLong(rs, "linkedTransactionId");
 
             return new ShareAccountTransactionData(id, accountId, purchasedDate, numberOfShares, purchasedPrice, statusEnum, typeEnum,
-                    amount, chargeAmount, amountPaid);
+                    amount, chargeAmount, amountPaid, linkedTransactionId);
         }
 
         public String schema() {

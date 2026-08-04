@@ -44,4 +44,6 @@ public interface ShareAccountWritePlatformService {
     CommandProcessingResult rejectAdditionalShares(Long accountId, JsonCommand jsonCommand);
 
     CommandProcessingResult redeemShares(Long accountId, JsonCommand jsonCommand);
+
+    CommandProcessingResult transferShares(Long accountId, JsonCommand jsonCommand);
 }

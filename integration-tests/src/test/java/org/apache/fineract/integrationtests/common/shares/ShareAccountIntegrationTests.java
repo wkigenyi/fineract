@@ -1573,4 +1573,47 @@ public class ShareAccountIntegrationTests {
         map.put("activatedDate", activatedDate);
         return new Gson().toJson(map);
     }
+
+    @Test
+    public void testRedeemSharesToSavings() {
+        final SavingsAccountHelper savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        final Integer productId = createShareProduct();
+        final Integer savingsAccountId = savingsAccountHelper.openSavingsAccount(this.requestSpec, this.responseSpec, clientId, "1000");
+        savingsAccountHelper.depositToSavingsAccount(savingsAccountId, "2000", "01 January 2023", "resourceId");
+
+        final String shareAccountCreateJson = new ShareAccountHelper().withClientId(clientId.toString()).withProductId(productId.toString())
+                .withSavingsAccountId(savingsAccountId.toString()).withRequestedShares("10").withSubmittedDate("01 January 2023")
+                .withApplicationDate("01 January 2023").build();
+        final Integer shareAccountId = ShareAccountTransactionHelper.createShareAccount(shareAccountCreateJson, this.requestSpec,
+                this.responseSpec);
+        Assertions.assertNotNull(shareAccountId);
+
+        ShareAccountTransactionHelper.postCommand("approve", shareAccountId, getShareAccountApproveJson("01 January 2023"),
+                this.requestSpec, this.responseSpec);
+        ShareAccountTransactionHelper.postCommand("activate", shareAccountId, getShareAccountActivateJson("01 January 2023"),
+                this.requestSpec, this.responseSpec);
+
+        Map<String, Object> savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        final Float balanceBeforeRedeem = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("accountBalance");
+
+        final Map<String, Object> redeemRequestMap = new HashMap<>();
+        redeemRequestMap.put("requestedDate", "02 January 2023");
+        redeemRequestMap.put("dateFormat", "dd MMMM yyyy");
+        redeemRequestMap.put("locale", "en");
+        redeemRequestMap.put("requestedShares", "5");
+        redeemRequestMap.put("useSavings", true);
+        final String redeemRequestJson = new Gson().toJson(redeemRequestMap);
+        ShareAccountTransactionHelper.postCommand("redeemshares", shareAccountId, redeemRequestJson, this.requestSpec, this.responseSpec);
+
+        final Map<String, Object> shareAccountData = ShareAccountTransactionHelper.retrieveShareAccount(shareAccountId, requestSpec,
+                responseSpec);
+        final Map<String, Object> summaryMap = (Map<String, Object>) shareAccountData.get("summary");
+        Assertions.assertEquals("5", String.valueOf(summaryMap.get("totalApprovedShares")));
+
+        savingsAccount = savingsAccountHelper.getSavingsDetails(savingsAccountId);
+        final Float balanceAfterRedeem = (Float) ((Map<String, Object>) savingsAccount.get("summary")).get("accountBalance");
+        // 5 shares * unit price 2.0 = 10 credited to linked savings
+        Assertions.assertEquals(balanceBeforeRedeem + 10.0f, balanceAfterRedeem);
+    }
 }

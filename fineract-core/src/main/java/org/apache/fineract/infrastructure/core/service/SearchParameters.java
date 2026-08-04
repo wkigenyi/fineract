@@ -55,6 +55,8 @@ public class SearchParameters {
     private Long productId;
     private Long categoryId;
     private Integer legalForm;
+    /** Filter journal entries by creating app user (`m_appuser.id` / `created_by`). */
+    private Long createdByUserId;
 
     public Integer getLimit() {
         if (limit == null) {
@@ -110,6 +112,10 @@ public class SearchParameters {
 
     public boolean hasSavingsId() {
         return this.savingsId != null && this.savingsId != 0;
+    }
+
+    public boolean hasCreatedByUserId() {
+        return this.createdByUserId != null && this.createdByUserId != 0;
     }
 
     public boolean hasProvisioningEntryId() {

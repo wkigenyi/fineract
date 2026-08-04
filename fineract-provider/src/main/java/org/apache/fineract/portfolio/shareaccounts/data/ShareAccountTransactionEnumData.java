@@ -32,6 +32,8 @@ public class ShareAccountTransactionEnumData implements Serializable {
     private final boolean isPurchased;
     private final boolean isRedeemed;
     private final boolean isChargePayment;
+    private final boolean isTransferredOut;
+    private final boolean isTransferredIn;
 
     public ShareAccountTransactionEnumData(final Long id, final String code, final String value) {
         this.id = id;
@@ -43,6 +45,8 @@ public class ShareAccountTransactionEnumData implements Serializable {
         this.isPurchased = Long.valueOf(500).equals(this.id);
         this.isRedeemed = Long.valueOf(600).equals(this.id);
         this.isChargePayment = Long.valueOf(700).equals(this.id);
+        this.isTransferredOut = Long.valueOf(800).equals(this.id);
+        this.isTransferredIn = Long.valueOf(900).equals(this.id);
     }
 
     public Long getId() {
@@ -79,6 +83,14 @@ public class ShareAccountTransactionEnumData implements Serializable {
 
     public boolean isChargePayment() {
         return this.isChargePayment;
+    }
+
+    public boolean isTransferredOut() {
+        return this.isTransferredOut;
+    }
+
+    public boolean isTransferredIn() {
+        return this.isTransferredIn;
     }
 
 }

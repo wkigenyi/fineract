@@ -550,9 +550,9 @@ public class ShareAccount extends AbstractPersistableCustom<Long> {
         if (this.status != null && !(this.status.equals(ShareAccountStatusType.REJECTED.getValue()) || this.status.equals(ShareAccountStatusType.CLOSED.getValue()))) {
             for (final ShareAccountTransaction transaction : this.shareAccountTransactions) {
                 if (transaction.isActive()) {
-                    if (transaction.isPurchasTransaction()) {
+                    if (transaction.isPurchasTransaction() || transaction.isTransferInTransaction()) {
                         this.totalSharesApproved += transaction.getTotalShares();
-                    } else if (transaction.isRedeemTransaction()) {
+                    } else if (transaction.isRedeemTransaction() || transaction.isTransferOutTransaction()) {
                         this.totalSharesApproved -= transaction.getTotalShares();
                     } else if (transaction.isPendingForApprovalTransaction()) {
                         this.totalSharesPending += transaction.getTotalShares();

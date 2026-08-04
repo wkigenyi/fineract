@@ -25,6 +25,7 @@ import org.apache.fineract.infrastructure.core.service.PaginationHelper;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
 import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetailRepository;
 import org.apache.fineract.portfolio.account.service.AccountNumberGenerator;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
 import org.apache.fineract.portfolio.accounts.constants.AccountsApiConstants;
@@ -120,10 +121,11 @@ public class ShareAccountsConfiguration {
             BusinessEventNotifierService businessEventNotifierService,
             AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
+            SavingsAccountTransactionRepository savingsAccountTransactionRepository,
+            AccountTransferDetailRepository accountTransferDetailRepository) {
         return new ShareAccountWritePlatformServiceJpaRepositoryImpl(accountDataSerializer, shareAccountRepository, shareProductRepository,
                 accountNumberGenerator, accountNumberFormatRepository, journalEntryWritePlatformService, noteRepository,
                 businessEventNotifierService, accountTransfersWritePlatformService, savingsAccountWritePlatformService,
-                savingsAccountTransactionRepository);
+                savingsAccountTransactionRepository, accountTransferDetailRepository);
     }
 }

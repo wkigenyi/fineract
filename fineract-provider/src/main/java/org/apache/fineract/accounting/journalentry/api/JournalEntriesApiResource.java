@@ -128,7 +128,8 @@ public class JournalEntriesApiResource {
             @QueryParam("loanId") @Parameter(description = "loanId") final Long loanId,
             @QueryParam("savingsId") @Parameter(description = "savingsId") final Long savingsId,
             @QueryParam("runningBalance") @Parameter(description = "runningBalance") final boolean runningBalance,
-            @QueryParam("transactionDetails") @Parameter(description = "transactionDetails") final boolean transactionDetails) {
+            @QueryParam("transactionDetails") @Parameter(description = "transactionDetails") final boolean transactionDetails,
+            @QueryParam("createdByUserId") @Parameter(description = "createdByUserId") final Long createdByUserId) {
 
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSION);
 
@@ -155,7 +156,7 @@ public class JournalEntriesApiResource {
         sqlValidator.validate(orderBy);
         sqlValidator.validate(sortOrder);
         final SearchParameters searchParameters = SearchParameters.builder().limit(limit).officeId(officeId).offset(offset).orderBy(orderBy)
-                .sortOrder(sortOrder).loanId(loanId).savingsId(savingsId).build();
+                .sortOrder(sortOrder).loanId(loanId).savingsId(savingsId).createdByUserId(createdByUserId).build();
         JournalEntryAssociationParametersData associationParametersData = new JournalEntryAssociationParametersData(transactionDetails,
                 runningBalance);
 

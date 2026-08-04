@@ -43,6 +43,9 @@ import org.apache.fineract.infrastructure.event.business.domain.share.ShareAccou
 import org.apache.fineract.infrastructure.event.business.service.BusinessEventNotifierService;
 import org.apache.fineract.portfolio.account.PortfolioAccountType;
 import org.apache.fineract.portfolio.account.data.AccountTransferDTO;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetailRepository;
+import org.apache.fineract.portfolio.account.domain.AccountTransferDetails;
+import org.apache.fineract.portfolio.account.domain.AccountTransferTransaction;
 import org.apache.fineract.portfolio.account.domain.AccountTransferType;
 import org.apache.fineract.portfolio.account.service.AccountNumberGenerator;
 import org.apache.fineract.portfolio.account.service.AccountTransfersWritePlatformService;
@@ -85,6 +88,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
     private final AccountTransfersWritePlatformService accountTransfersWritePlatformService;
     private final SavingsAccountWritePlatformService savingsAccountWritePlatformService;
     private final SavingsAccountTransactionRepository savingsAccountTransactionRepository;
+    private final AccountTransferDetailRepository accountTransferDetailRepository;
 
     public ShareAccountWritePlatformServiceJpaRepositoryImpl(final ShareAccountDataSerializer accountDataSerializer,
             final ShareAccountRepositoryWrapper shareAccountRepository, final ShareProductRepositoryWrapper shareProductRepository,
@@ -94,7 +98,8 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
             final BusinessEventNotifierService businessEventNotifierService,
             final AccountTransfersWritePlatformService accountTransfersWritePlatformService,
             final SavingsAccountWritePlatformService savingsAccountWritePlatformService,
-            final SavingsAccountTransactionRepository savingsAccountTransactionRepository) {
+            final SavingsAccountTransactionRepository savingsAccountTransactionRepository,
+            final AccountTransferDetailRepository accountTransferDetailRepository) {
         this.accountDataSerializer = accountDataSerializer;
         this.shareAccountRepository = shareAccountRepository;
         this.shareProductRepository = shareProductRepository;
@@ -106,6 +111,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         this.accountTransfersWritePlatformService = accountTransfersWritePlatformService;
         this.savingsAccountWritePlatformService = savingsAccountWritePlatformService;
         this.savingsAccountTransactionRepository = savingsAccountTransactionRepository;
+        this.accountTransferDetailRepository = accountTransferDetailRepository;
     }
 
     @Override
@@ -391,7 +397,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                     journalTransactions.add(transaction);
                     if (transaction.isUsingSavings() && transaction.getSavingsTransactionId() != null) {
                         this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
-                                transaction.getSavingsTransactionId());
+                                transaction.getSavingsTransactionId(), JsonCommand.from("{}"));
                     }
                 }
             }
@@ -559,7 +565,7 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                         transactions.add(transaction);
                         if (transaction.isUsingSavings() && transaction.getSavingsTransactionId() != null) {
                             this.savingsAccountWritePlatformService.releaseAmount(account.getSavingsAccount().getId(),
-                                    transaction.getSavingsTransactionId());
+                                    transaction.getSavingsTransactionId(), JsonCommand.from("{}"));
                         }
                     }
                     this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
@@ -593,16 +599,72 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 // remove the redeem shares from total subscribed shares
                 recalculateShareProductSummary(shareProduct);
 
+                creditRedeemProceedsToSavingsIfRequested(account, transaction);
+
                 Set<ShareAccountTransaction> transactions = new HashSet<>();
                 transactions.add(transaction);
                 this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
                 changes.clear();
                 changes.put(ShareAccountApiConstants.requestedshares_paramname, transaction.getId());
+                if (transaction.getSavingsTransactionId() != null) {
+                    changes.put("savingsTransactionId", transaction.getSavingsTransactionId());
+                }
 
             }
             return new CommandProcessingResultBuilder() //
                     .withCommandId(jsonCommand.commandId()) //
                     .withEntityId(accountId) //
+                    .with(changes) //
+                    .build();
+        } catch (final JpaSystemException | DataIntegrityViolationException dve) {
+            handleDataIntegrityIssues(jsonCommand, dve.getMostSpecificCause(), dve);
+            return CommandProcessingResult.empty();
+        }
+    }
+
+    @Override
+    public CommandProcessingResult transferShares(final Long fromAccountId, final JsonCommand jsonCommand) {
+        try {
+            final ShareAccount fromAccount = this.shareAccountRepository.findOneWithNotFoundDetection(fromAccountId);
+            final Long toShareAccountId = jsonCommand.longValueOfParameterNamed(ShareAccountApiConstants.toShareAccountIdParamName);
+            final ShareAccount toAccount = toShareAccountId == null ? null
+                    : this.shareAccountRepository.findOneWithNotFoundDetection(toShareAccountId);
+
+            final Map<String, Object> changes = this.accountDataSerializer.validateAndTransferShares(jsonCommand, fromAccount, toAccount);
+            final ShareAccountTransaction[] transferPair = (ShareAccountTransaction[]) changes
+                    .get(ShareAccountApiConstants.requestedshares_paramname);
+            final ShareAccountTransaction transferOut = transferPair[0];
+            final ShareAccountTransaction transferIn = transferPair[1];
+
+            this.shareAccountRepository.saveAndFlush(fromAccount);
+            this.shareAccountRepository.saveAndFlush(toAccount);
+
+            ShareAccountTransaction persistedOut = fromAccount.getShareAccountTransaction(transferOut);
+            ShareAccountTransaction persistedIn = toAccount.getShareAccountTransaction(transferIn);
+            persistedOut.updateLinkedTransactionId(persistedIn.getId());
+            persistedIn.updateLinkedTransactionId(persistedOut.getId());
+            this.shareAccountRepository.saveAndFlush(fromAccount);
+            this.shareAccountRepository.saveAndFlush(toAccount);
+
+            // Ownership move within same product — subscribed capital unchanged; no journal entries.
+            recalculateShareProductSummary(fromAccount.getShareProduct());
+
+            final String noteText = jsonCommand.stringValueOfParameterNamed(ShareAccountApiConstants.note_paramname);
+            if (StringUtils.isNotBlank(noteText)) {
+                this.noteRepository.save(Note.shareNote(fromAccount, noteText));
+                changes.put(ShareAccountApiConstants.note_paramname, noteText);
+            }
+
+            changes.clear();
+            changes.put(ShareAccountApiConstants.toShareAccountIdParamName, toAccount.getId());
+            changes.put(ShareAccountApiConstants.transferredOutTransactionIdParamName, persistedOut.getId());
+            changes.put(ShareAccountApiConstants.transferredInTransactionIdParamName, persistedIn.getId());
+            changes.put(ShareAccountApiConstants.requestedshares_paramname, persistedOut.getTotalShares());
+
+            return new CommandProcessingResultBuilder() //
+                    .withCommandId(jsonCommand.commandId()) //
+                    .withEntityId(fromAccountId) //
+                    .withClientId(fromAccount.getClient().getId()) //
                     .with(changes) //
                     .build();
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
@@ -627,11 +689,15 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
                 ShareAccountTransaction transaction = (ShareAccountTransaction) changes
                         .get(ShareAccountApiConstants.requestedshares_paramname);
                 transaction = account.getShareAccountTransaction(transaction);
+                creditRedeemProceedsToSavingsIfRequested(account, transaction);
                 Set<ShareAccountTransaction> transactions = new HashSet<>();
                 transactions.add(transaction);
                 this.journalEntryWritePlatformService.createJournalEntriesForShares(populateJournalEntries(account, transactions));
                 changes.clear();
                 changes.put(ShareAccountApiConstants.requestedshares_paramname, transaction.getId());
+                if (transaction.getSavingsTransactionId() != null) {
+                    changes.put("savingsTransactionId", transaction.getSavingsTransactionId());
+                }
 
             }
             return new CommandProcessingResultBuilder() //
@@ -642,6 +708,31 @@ public class ShareAccountWritePlatformServiceJpaRepositoryImpl implements ShareA
         } catch (final JpaSystemException | DataIntegrityViolationException dve) {
             handleDataIntegrityIssues(jsonCommand, dve.getMostSpecificCause(), dve);
             return CommandProcessingResult.empty();
+        }
+    }
+
+    private void creditRedeemProceedsToSavingsIfRequested(final ShareAccount account, final ShareAccountTransaction transaction) {
+        if (!transaction.isUsingSavings()) {
+            return;
+        }
+        final BigDecimal transferAmount = transaction.amount();
+        if (transferAmount == null || transferAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        final SavingsAccount savingsAccount = account.getSavingsAccount();
+        final AccountTransferDTO accountTransferDTO = new AccountTransferDTO(transaction.getPurchasedDate(), transferAmount,
+                PortfolioAccountType.SHARES, PortfolioAccountType.SAVINGS, account.getId(), savingsAccount.getId(), "Share Redeem", null,
+                null, null, null, null, null, null, AccountTransferType.ACCOUNT_TRANSFER.getValue(), null, null,
+                org.apache.fineract.infrastructure.core.domain.ExternalId.empty(), null, savingsAccount, null, Boolean.TRUE, Boolean.FALSE);
+        final Long transferDetailsId = this.accountTransfersWritePlatformService.transferFunds(accountTransferDTO);
+        final AccountTransferDetails transferDetails = this.accountTransferDetailRepository.findById(transferDetailsId).orElse(null);
+        if (transferDetails != null && transferDetails.getAccountTransferTransactions() != null
+                && !transferDetails.getAccountTransferTransactions().isEmpty()) {
+            final AccountTransferTransaction transferTransaction = transferDetails.getAccountTransferTransactions().get(0);
+            if (transferTransaction.getToSavingsTransaction() != null) {
+                transaction.updateSavingsTransactionId(transferTransaction.getToSavingsTransaction().getId());
+                this.shareAccountRepository.saveAndFlush(account);
+            }
         }
     }
 

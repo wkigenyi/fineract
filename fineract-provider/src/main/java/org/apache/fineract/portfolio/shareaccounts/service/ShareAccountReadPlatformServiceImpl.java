@@ -427,7 +427,7 @@ public class ShareAccountReadPlatformServiceImpl implements ShareAccountReadPlat
         private static final String PURCHASED_SHARES_SCHEMA = """
                 saps.id as purchasedId, saps.account_id as accountId, saps.transaction_date as transactionDate, saps.total_shares as purchasedShares, saps.unit_price as unitPrice,
                 saps.status_enum as purchaseStatus, saps.type_enum as purchaseType, saps.amount as amount, saps.charge_amount as chargeamount,
-                saps.amount_paid as amountPaid\s""";
+                saps.amount_paid as amountPaid, saps.linked_transaction_id as linkedTransactionId\s""";
 
         PurchasedSharesDataRowMapper() {}
 
@@ -445,8 +445,9 @@ public class ShareAccountReadPlatformServiceImpl implements ShareAccountReadPlat
             final BigDecimal amount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "amount");
             final BigDecimal chargeAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "chargeamount");
             final BigDecimal amountPaid = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "amountPaid");
+            final Long linkedTransactionId = JdbcSupport.getLong(rs, "linkedTransactionId");
             return new ShareAccountTransactionData(id, accountId, transactionDate, numberOfShares, purchasedPrice, statusEnum, typeEnum,
-                    amount, chargeAmount, amountPaid);
+                    amount, chargeAmount, amountPaid, linkedTransactionId);
         }
 
         public String schema() {

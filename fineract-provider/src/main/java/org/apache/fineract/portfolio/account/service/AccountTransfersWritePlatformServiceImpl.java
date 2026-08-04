@@ -101,7 +101,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             final AccountTransferDetailRepository accountTransferDetailRepository,
             final LoanReadPlatformService loanReadPlatformService, final GSIMRepositoy gsimRepository,
             final ConfigurationDomainService configurationDomainService, final ExternalIdFactory externalIdFactory,
-            final FineractProperties fineractProperties) {
+            final FineractProperties fineractProperties, final LoanAdjustmentService loanAdjustmentService) {
         this.accountTransfersDataValidator = accountTransfersDataValidator;
         this.accountTransferAssembler = accountTransferAssembler;
         this.accountTransferRepository = accountTransferRepository;
@@ -116,6 +116,7 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
         this.configurationDomainService = configurationDomainService;
         this.externalIdFactory = externalIdFactory;
         this.fineractProperties = fineractProperties;
+        this.loanAdjustmentService = loanAdjustmentService;
     }
 
     @Transactional
@@ -458,6 +459,30 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
             this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
             transferTransactionId = accountTransferDetails.getId();
 
+        } else if (isSharesToSavingsAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
+            SavingsAccount toSavingsAccount = null;
+            if (accountTransferDetails == null) {
+                if (accountTransferDTO.getToSavingsAccount() == null) {
+                    toSavingsAccount = this.savingsAccountAssembler.assembleFrom(accountTransferDTO.getToAccountId(),
+                            backdatedTxnsAllowedTill);
+                } else {
+                    toSavingsAccount = accountTransferDTO.getToSavingsAccount();
+                    this.savingsAccountAssembler.setHelpers(toSavingsAccount);
+                }
+            } else {
+                toSavingsAccount = accountTransferDetails.toSavingsAccount();
+                this.savingsAccountAssembler.setHelpers(toSavingsAccount);
+            }
+
+            final SavingsAccountTransaction deposit = this.savingsAccountDomainService.handleDeposit(toSavingsAccount,
+                    accountTransferDTO.getFmt(), accountTransferDTO.getTransactionDate(), accountTransferDTO.getTransactionAmount(),
+                    accountTransferDTO.getPaymentDetail(), isAccountTransfer, isRegularTransaction, backdatedTxnsAllowedTill);
+
+            accountTransferDetails = this.accountTransferAssembler.assembleSharesToSavingsTransfer(accountTransferDTO, toSavingsAccount,
+                    deposit);
+            this.accountTransferDetailRepository.saveAndFlush(accountTransferDetails);
+            transferTransactionId = accountTransferDetails.getId();
+
         } else if (isLoanToSavingsAccountTransfer(accountTransferDTO.getFromAccountType(), accountTransferDTO.getToAccountType())) {
 
             Loan fromLoanAccount = null;
@@ -620,6 +645,11 @@ public class AccountTransfersWritePlatformServiceImpl implements AccountTransfer
     private boolean isSavingsToSharesAccountTransfer(final PortfolioAccountType fromAccountType,
             final PortfolioAccountType toAccountType) {
         return fromAccountType.isSavingsAccount() && toAccountType.isSharesAccount();
+    }
+
+    private boolean isSharesToSavingsAccountTransfer(final PortfolioAccountType fromAccountType,
+            final PortfolioAccountType toAccountType) {
+        return fromAccountType.isSharesAccount() && toAccountType.isSavingsAccount();
     }
 
     @Override

@@ -40,7 +40,8 @@
     </changeSet>
 
     <!-- Create delinquency range schedule table -->
-    <changeSet author="fineract" id="wcl-0014-2">
+    <changeSet author="fineract" id="wcl-0014-2" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_wc_loan_delinquency_range_schedule"/>

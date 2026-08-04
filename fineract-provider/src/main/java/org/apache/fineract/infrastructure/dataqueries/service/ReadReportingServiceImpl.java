@@ -223,20 +223,20 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         sql = Pattern.compile(Pattern.quote("CURRENT_DATE"), Pattern.CASE_INSENSITIVE).matcher(sql)
                 .replaceAll(Matcher.quoteReplacement(sqlGenerator.currentBusinessDate()));
 
-        // Step 2.5a — display-literal substitution for date/number params only
-        // Substitute as plain string to preserve varchar return type expected by callers
+        // Step 2.5a — display-literal substitution for `'${param}' AS alias` columns.
+        // Allowed for date/number and text/string (e.g. ISO currency codes).
+        // Values are embedded as SQL string literals (with quotes escaped), not bind variables.
         for (Map.Entry<String, String> entry : queryParams.entrySet()) {
             String paramName = entry.getKey().startsWith("${") ? entry.getKey().substring(2, entry.getKey().length() - 1) : entry.getKey();
             String formatType = paramFormatTypes.get(paramName);
             String displayPattern = "'\\$\\{" + Pattern.quote(paramName) + "\\}'(\\s+AS\\s+)";
             if (sql.matches("(?s).*" + displayPattern + ".*")) {
-                if (formatType == null || (!formatType.equalsIgnoreCase("number") && !formatType.equalsIgnoreCase("integer")
-                        && !formatType.equalsIgnoreCase("date"))) {
+                if (!isAllowedDisplayLiteralFormatType(formatType)) {
                     throw new InputValidationException("Parameter '%s' of type '%s' cannot be used in display-literal position"
                             .formatted(paramName, formatType != null ? formatType : "unregistered"));
                 }
-                // Substitute as string literal — preserves varchar return type
-                sql = sql.replaceAll(displayPattern, "'" + Matcher.quoteReplacement(entry.getValue()) + "'$1");
+                final String literalValue = escapeSqlStringLiteral(entry.getValue());
+                sql = sql.replaceAll(displayPattern, "'" + Matcher.quoteReplacement(literalValue) + "'$1");
             }
         }
 
@@ -256,6 +256,22 @@ public class ReadReportingServiceImpl implements ReadReportingService {
         }
 
         return buildPreparedQuery(name, normalisedParams, sql, paramFormatTypes);
+    }
+
+    private static boolean isAllowedDisplayLiteralFormatType(final String formatType) {
+        if (formatType == null) {
+            return false;
+        }
+        return formatType.equalsIgnoreCase("number") || formatType.equalsIgnoreCase("integer") || formatType.equalsIgnoreCase("date")
+                || formatType.equalsIgnoreCase("text") || formatType.equalsIgnoreCase("string");
+    }
+
+    /** Escapes single quotes so display-literal substitution cannot break out of the SQL string. */
+    private static String escapeSqlStringLiteral(final String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("'", "''");
     }
 
     private String getSql(final String name, final String type) {

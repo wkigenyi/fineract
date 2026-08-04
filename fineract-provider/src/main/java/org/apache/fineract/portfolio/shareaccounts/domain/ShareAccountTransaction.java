@@ -73,6 +73,9 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
     @Column(name = "savings_transaction_id", nullable = true)
     private Long savingsTransactionId;
 
+    @Column(name = "linked_transaction_id", nullable = true)
+    private Long linkedTransactionId;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "shareAccountTransaction", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<ShareAccountChargePaidBy> shareAccountChargesPaid = new HashSet<>();
 
@@ -112,12 +115,35 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
 
     public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate, final Long totalShares,
             final BigDecimal shareValue) {
+        return createRedeemTransaction(transactionDate, totalShares, shareValue, null);
+    }
+
+    public static ShareAccountTransaction createRedeemTransaction(final LocalDate transactionDate, final Long totalShares,
+            final BigDecimal shareValue, final Boolean useSavings) {
         final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
         final Integer type = PurchasedSharesStatusType.REDEEMED.getValue();
         final long shareCount = totalShares != null ? totalShares : 0L;
         final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(shareCount));
         BigDecimal amountPaid = new BigDecimal(amount.doubleValue());
-        return new ShareAccountTransaction(transactionDate, shareCount, shareValue, status, type, amount, null, amountPaid, null);
+        return new ShareAccountTransaction(transactionDate, shareCount, shareValue, status, type, amount, null, amountPaid, useSavings);
+    }
+
+    public static ShareAccountTransaction createTransferOutTransaction(final LocalDate transactionDate, final Long totalShares,
+            final BigDecimal shareValue) {
+        final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
+        final Integer type = PurchasedSharesStatusType.TRANSFERRED_OUT.getValue();
+        final long shareCount = totalShares != null ? totalShares : 0L;
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(shareCount));
+        return new ShareAccountTransaction(transactionDate, shareCount, shareValue, status, type, amount, null, amount, null);
+    }
+
+    public static ShareAccountTransaction createTransferInTransaction(final LocalDate transactionDate, final Long totalShares,
+            final BigDecimal shareValue) {
+        final Integer status = PurchasedSharesStatusType.APPROVED.getValue();
+        final Integer type = PurchasedSharesStatusType.TRANSFERRED_IN.getValue();
+        final long shareCount = totalShares != null ? totalShares : 0L;
+        final BigDecimal amount = shareValue.multiply(BigDecimal.valueOf(shareCount));
+        return new ShareAccountTransaction(transactionDate, shareCount, shareValue, status, type, amount, null, amount, null);
     }
 
     public static ShareAccountTransaction createChargeTransaction(final LocalDate transactionDate, final ShareAccountCharge charge) {
@@ -194,9 +220,27 @@ public class ShareAccountTransaction extends AbstractPersistableCustom<Long> {
                 && this.type.equals(PurchasedSharesStatusType.REDEEMED.getValue());
     }
 
+    public boolean isTransferOutTransaction() {
+        return this.status.equals(PurchasedSharesStatusType.APPROVED.getValue())
+                && this.type.equals(PurchasedSharesStatusType.TRANSFERRED_OUT.getValue());
+    }
+
+    public boolean isTransferInTransaction() {
+        return this.status.equals(PurchasedSharesStatusType.APPROVED.getValue())
+                && this.type.equals(PurchasedSharesStatusType.TRANSFERRED_IN.getValue());
+    }
+
     public boolean isChargeTransaction() {
         return this.status.equals(PurchasedSharesStatusType.APPROVED.getValue())
                 && this.type.equals(PurchasedSharesStatusType.CHARGE_PAYMENT.getValue());
+    }
+
+    public void updateLinkedTransactionId(final Long linkedTransactionId) {
+        this.linkedTransactionId = linkedTransactionId;
+    }
+
+    public Long getLinkedTransactionId() {
+        return this.linkedTransactionId;
     }
 
     public boolean isPurchaseRejectedTransaction() {

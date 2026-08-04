@@ -175,4 +175,20 @@ public class AccountTransferAssembler {
         accountTransferDetails.addAccountTransferTransaction(accountTransferTransaction);
         return accountTransferDetails;
     }
+
+    public AccountTransferDetails assembleSharesToSavingsTransfer(final AccountTransferDTO accountTransferDTO,
+            final SavingsAccount toSavingsAccount, final SavingsAccountTransaction deposit) {
+        final Money transactionMonetaryAmount = Money.of(toSavingsAccount.getCurrency(), accountTransferDTO.getTransactionAmount());
+        AccountTransferDetails accountTransferDetails = accountTransferDTO.getAccountTransferDetails();
+        if (accountTransferDetails == null) {
+            final ShareAccount fromShareAccount = this.accountTransferDetailAssembler.getShareAccountRepository()
+                    .findOneWithNotFoundDetection(accountTransferDTO.getFromAccountId());
+            accountTransferDetails = this.accountTransferDetailAssembler.assembleSharesToSavingsTransfer(fromShareAccount, toSavingsAccount,
+                    accountTransferDTO.getTransferType());
+        }
+        AccountTransferTransaction accountTransferTransaction = AccountTransferTransaction.sharesToSavingsTransfer(accountTransferDetails,
+                deposit, accountTransferDTO.getTransactionDate(), transactionMonetaryAmount, accountTransferDTO.getDescription());
+        accountTransferDetails.addAccountTransferTransaction(accountTransferTransaction);
+        return accountTransferDetails;
+    }
 }

@@ -121,6 +121,14 @@ public final class SharesEnumerations {
                 data = new EnumOptionData(PurchasedSharesStatusType.CHARGE_PAYMENT.getValue().longValue(),
                         PurchasedSharesStatusType.CHARGE_PAYMENT.getCode(), "Charge Payment");
             break;
+            case TRANSFERRED_OUT:
+                data = new EnumOptionData(PurchasedSharesStatusType.TRANSFERRED_OUT.getValue().longValue(),
+                        PurchasedSharesStatusType.TRANSFERRED_OUT.getCode(), "Transfer Out");
+            break;
+            case TRANSFERRED_IN:
+                data = new EnumOptionData(PurchasedSharesStatusType.TRANSFERRED_IN.getValue().longValue(),
+                        PurchasedSharesStatusType.TRANSFERRED_IN.getCode(), "Transfer In");
+            break;
 
         }
         return data;

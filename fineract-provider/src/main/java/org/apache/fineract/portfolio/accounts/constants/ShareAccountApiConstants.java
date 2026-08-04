@@ -38,6 +38,7 @@ public interface ShareAccountApiConstants {
     String APPLY_ADDITIONALSHARES_COMMAND = "applyadditionalshares";
     String APPROVE_ADDITIONSHARES_COMMAND = "approveadditionalshares";
     String REJECT_ADDITIONSHARES_COMMAND = "rejectadditionalshares";
+    String TRANSFER_SHARES_COMMAND = "transfershares";
 
     //
     String locale_paramname = "locale";
@@ -99,6 +100,12 @@ public interface ShareAccountApiConstants {
     String closeddate_paramname = "closedDate";
 
     String use_savings_paramname = "useSavings";
+
+    String toShareAccountIdParamName = "toShareAccountId";
+
+    String transferredOutTransactionIdParamName = "transferredOutTransactionId";
+
+    String transferredInTransactionIdParamName = "transferredInTransactionId";
 
     String shareEntityType = "share";
 

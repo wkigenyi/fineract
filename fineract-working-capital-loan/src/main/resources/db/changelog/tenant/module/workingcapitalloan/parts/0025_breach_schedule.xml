@@ -24,7 +24,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <!-- Create breach schedule table -->
-    <changeSet author="fineract" id="wcl-0025-1">
+    <changeSet author="fineract" id="wcl-0025-1" objectQuotingStrategy="QUOTE_ALL_OBJECTS">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="m_wc_loan_breach_schedule"/>

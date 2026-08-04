@@ -18,8 +18,11 @@
  */
 package org.apache.fineract.integrationtests.common.shares;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
+import java.lang.reflect.Type;
 import java.util.Map;
 import org.apache.fineract.integrationtests.common.Utils;
 
@@ -69,5 +72,29 @@ public final class ShareAccountTransactionHelper {
             final RequestSpecification requestSpec, final ResponseSpecification responseSpec) {
         String url = SHARE_ACCOUNT_URL + "/" + shareAccountId + "?command=" + command + "&" + Utils.TENANT_IDENTIFIER;
         return Utils.performServerPost(requestSpec, responseSpec, url, jsonBody, "resourceId");
+    }
+
+    /**
+     * Ownership transfer of shares between clients (no consideration payment).
+     * {@code fromShareAccountId} is the source; body must include {@code toShareAccountId}.
+     */
+    @Deprecated(forRemoval = true)
+    public static Map<String, Object> transferShares(final Integer fromShareAccountId, final Integer toShareAccountId,
+            final String requestedDate, final String requestedShares, final RequestSpecification requestSpec,
+            final ResponseSpecification responseSpec) {
+        final String jsonBody = """
+                {
+                  "toShareAccountId": %d,
+                  "requestedDate": "%s",
+                  "requestedShares": %s,
+                  "dateFormat": "dd MMMM yyyy",
+                  "locale": "en",
+                  "note": "Share ownership transfer"
+                }
+                """.formatted(toShareAccountId, requestedDate, requestedShares);
+        final String url = SHARE_ACCOUNT_URL + "/" + fromShareAccountId + "?command=transfershares&" + Utils.TENANT_IDENTIFIER;
+        final String response = Utils.performServerPost(requestSpec, responseSpec, url, jsonBody, null);
+        final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+        return new Gson().fromJson(response, mapType);
     }
 }

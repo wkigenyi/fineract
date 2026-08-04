@@ -153,6 +153,7 @@ public class AccountsApiResource {
             + "requestedShares is Share purchase transaction ids\n\n" + "Mandatory Fields: requestedShares\n\n"
             + "Redeem shares on a share account:\n\n" + "Results redeem some/all shares from share account.\n" + "\n"
             + "requestedDate is requsted date of shares redeem\n" + "\n" + "requestedShares is number of shares to be redeemed\n\n"
+            + "Optional Fields: useSavings (when true, net redeem proceeds are deposited to the linked savings account)\n\n"
             + "Mandatory Fields: dateFormat,locale,requestedDate,requestedShares\n\n"
             + "Showing request/response for 'Reject additional shares request on a share account'\n\n"
             + "For more info visit this link - https://fineract.apache.org/docs/legacy/#shareaccounts")

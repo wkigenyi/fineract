@@ -26,7 +26,9 @@ public enum PurchasedSharesStatusType {
     REJECTED(400, "purchasedSharesStatusType.rejected"), //
     PURCHASED(500, "purchasedSharesType.purchased"), //
     REDEEMED(600, "purchasedSharesType.redeemed"), //
-    CHARGE_PAYMENT(700, "charge.payment"); //
+    CHARGE_PAYMENT(700, "charge.payment"), //
+    TRANSFERRED_OUT(800, "purchasedSharesType.transferred.out"), //
+    TRANSFERRED_IN(900, "purchasedSharesType.transferred.in"); //
 
     private final Integer value;
     private final String code;
@@ -57,6 +59,12 @@ public enum PurchasedSharesStatusType {
             break;
             case 700:
                 enumeration = PurchasedSharesStatusType.CHARGE_PAYMENT;
+            break;
+            case 800:
+                enumeration = PurchasedSharesStatusType.TRANSFERRED_OUT;
+            break;
+            case 900:
+                enumeration = PurchasedSharesStatusType.TRANSFERRED_IN;
             break;
         }
         return enumeration;

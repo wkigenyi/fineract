@@ -228,6 +228,17 @@ public class AccountTransferDetailAssembler {
                 transferType);
     }
 
+    public AccountTransferDetails assembleSharesToSavingsTransfer(ShareAccount fromShareAccount, SavingsAccount toSavingsAccount,
+            Integer transferType) {
+        final Office fromOffice = fromShareAccount.getOffice();
+        final Client fromClient = fromShareAccount.getClient();
+        final Office toOffice = toSavingsAccount.office();
+        final Client toClient = toSavingsAccount.getClient();
+
+        return AccountTransferDetails.sharesToSavingsTransfer(fromOffice, fromClient, fromShareAccount, toOffice, toClient, toSavingsAccount,
+                transferType);
+    }
+
     public ShareAccountRepositoryWrapper getShareAccountRepository() {
         return this.shareAccountRepository;
     }
