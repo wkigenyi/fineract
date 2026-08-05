@@ -724,7 +724,12 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
                 accountTransaction.setAccountDebit(savingsAccountData.getGlAccountIdForOverdraftPorfolio());
                 accountTransaction.setAccountCredit(savingsAccountData.getGlAccountIdForInterestReceivable());
             }
+        } else if (Boolean.TRUE.equals(savingsAccountData.isCashBasedAccountingEnabledOnSavingsProduct())) {
+            // Cash-based: DR Interest on Savings (expense), CR Savings Control — same as CashBasedAccountingProcessorForSavings
+            accountTransaction.setAccountDebit(savingsAccountData.getGlAccountIdForInterestOnSavings());
+            accountTransaction.setAccountCredit(savingsAccountData.getGlAccountIdForSavingsControl());
         } else {
+            // Accrual: DR Interest Payable, CR Savings Control
             accountTransaction.setAccountDebit(savingsAccountData.getGlAccountIdForInterestPayable());
             accountTransaction.setAccountCredit(savingsAccountData.getGlAccountIdForSavingsControl());
         }

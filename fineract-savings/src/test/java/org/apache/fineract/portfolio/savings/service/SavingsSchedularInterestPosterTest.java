@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.savings.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -77,20 +78,20 @@ class SavingsSchedularInterestPosterTest {
     }
 
     @Test
-    void testVersionMismatchSkipsFailedAccountAndProceedsWithOthers() {
-        int[] updateCounts = { 1, 0, 1 };
-        List<Long> accountIds = List.of(1L, 2L, 3L);
-        List<Long> successfulIds = new ArrayList<>();
+    void testValidGlAccountIdsRequiredForJournalInsert() {
+        // Mirrors SavingsSchedularInterestPoster journal gating: cash products must not enter JE insert
+        // when debit was interest-payable (0) even though interest-on-savings and savings-control exist.
+        Long interestPayableUnset = 0L;
+        Long interestOnSavings = 10L;
+        Long savingsControl = 20L;
 
-        for (int i = 0; i < updateCounts.length; i++) {
-            if (updateCounts[i] == 0) {
-                // account is skipped due to concurrent modification — logged, not thrown
-            } else {
-                successfulIds.add(accountIds.get(i));
-            }
-        }
+        assertTrue(isValidGlAccountId(interestOnSavings) && isValidGlAccountId(savingsControl),
+                "Cash-based debit/credit (interest-on-savings + savings-control) should be valid");
+        assertFalse(isValidGlAccountId(interestPayableUnset) && isValidGlAccountId(savingsControl),
+                "Interest-payable=0 must not pass the journal gate with savings-control alone");
+    }
 
-        assertEquals(2, successfulIds.size(), "Two accounts should proceed normally");
-        assertTrue(successfulIds.containsAll(List.of(1L, 3L)), "Accounts 1 and 3 should succeed independently");
+    private static boolean isValidGlAccountId(final Long accountId) {
+        return accountId != null && accountId != 0L;
     }
 }

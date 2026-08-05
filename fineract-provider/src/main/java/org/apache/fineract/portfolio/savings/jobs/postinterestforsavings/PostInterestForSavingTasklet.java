@@ -35,6 +35,7 @@ import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDoma
 import org.apache.fineract.infrastructure.core.config.TaskExecutorConstant;
 import org.apache.fineract.infrastructure.core.domain.FineractContext;
 import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.jobs.exception.JobExecutionException;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.SavingsSchedularInterestPosterTask;
@@ -97,7 +98,7 @@ public class PostInterestForSavingTasklet implements Tasklet {
     }
 
     private void postInterest(List<SavingsAccountData> savingsAccounts, int threadPoolSize, final boolean backdatedTxnsAllowedTill,
-            final int pageSize, Long maxSavingsIdInList, Queue<List<SavingsAccountData>> queue) {
+            final int pageSize, Long maxSavingsIdInList, Queue<List<SavingsAccountData>> queue) throws JobExecutionException {
         List<Callable<Void>> posters = new ArrayList<>();
         int fromIndex = 0;
         int size = savingsAccounts.size();
@@ -183,26 +184,22 @@ public class PostInterestForSavingTasklet implements Tasklet {
         return list.subList(fromIndex, toIndex);
     }
 
-    private void checkCompletion(List<Future<Void>> responses) {
-        try {
-            for (Future<Void> f : responses) {
+    private void checkCompletion(List<Future<Void>> responses) throws JobExecutionException {
+        List<Throwable> errors = new ArrayList<>();
+        for (Future<Void> f : responses) {
+            try {
                 f.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Interrupted while interest posting entries", e);
+                errors.add(e);
+            } catch (ExecutionException e) {
+                log.error("Execution exception while interest posting entries", e);
+                errors.add(e.getCause() != null ? e.getCause() : e);
             }
-            boolean allThreadsExecuted;
-            int noOfThreadsExecuted = 0;
-            for (Future<Void> future : responses) {
-                if (future.isDone()) {
-                    noOfThreadsExecuted++;
-                }
-            }
-            allThreadsExecuted = noOfThreadsExecuted == responses.size();
-            if (!allThreadsExecuted) {
-                log.error("All threads could not execute.");
-            }
-        } catch (InterruptedException e1) {
-            log.error("Interrupted while interest posting entries", e1);
-        } catch (ExecutionException e2) {
-            log.error("Execution exception while interest posting entries", e2);
+        }
+        if (!errors.isEmpty()) {
+            throw new JobExecutionException(errors);
         }
     }
 }

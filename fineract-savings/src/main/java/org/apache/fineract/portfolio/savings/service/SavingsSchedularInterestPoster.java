@@ -76,6 +76,8 @@ public class SavingsSchedularInterestPoster {
     @Transactional(transactionManager = "jdbcTransactionManager", isolation = Isolation.READ_UNCOMMITTED, rollbackFor = Exception.class)
     public void postInterest() throws JobExecutionException {
         if (!savingAccounts.isEmpty()) {
+            // Clear in case Resilience4j retries reuse this prototype instance
+            savingsAccountDataList.clear();
             List<Throwable> errors = new ArrayList<>();
             for (SavingsAccountData savingsAccountData : savingAccounts) {
                 boolean postInterestAsOn = false;
@@ -127,13 +129,22 @@ public class SavingsSchedularInterestPoster {
                 if (savingsAccountTransactionData.getId() == null && !MathUtil.isZero(savingsAccountTransactionData.getAmount())) {
                     final String key = savingsAccountTransactionData.getRefNo();
                     final SavingsAccountTransactionData dataFromFetch = savingsAccountTransactionDataHashMap.get(key);
+                    if (dataFromFetch == null || dataFromFetch.getId() == null) {
+                        throw new IllegalStateException(
+                                "Interest posting transaction not found after insert for refNo=" + key + ", savingsAccountId="
+                                        + savingsAccountData.getId());
+                    }
                     savingsAccountTransactionData.setId(dataFromFetch.getId());
-                    if (savingsAccountData.getGlAccountIdForSavingsControl() != 0
-                            && savingsAccountData.getGlAccountIdForInterestOnSavings() != 0) {
+                    // Use the GL accounts selected for this transaction (cash: interest-on-savings; accrual: interest-payable).
+                    // Do not key off interest-on-savings alone — that wrongly entered the JE path for cash products while
+                    // debit was still interest-payable (0), causing FK failures and rolling back interest inserts.
+                    final Long debitAccountId = savingsAccountTransactionData.getAccountDebit();
+                    final Long creditAccountId = savingsAccountTransactionData.getAccountCredit();
+                    if (isValidGlAccountId(debitAccountId) && isValidGlAccountId(creditAccountId)) {
                         OffsetDateTime auditDatetime = DateUtils.getAuditOffsetDateTime();
                         paramsForGLInsertion.add(
-                                new Object[] { savingsAccountTransactionData.getAccountCredit(), savingsAccountData.getOfficeId(), null,
-                                        currencyCode, SAVINGS_TRANSACTION_IDENTIFIER + savingsAccountTransactionData.getId().toString(),
+                                new Object[] { creditAccountId, savingsAccountData.getOfficeId(), null, currencyCode,
+                                        SAVINGS_TRANSACTION_IDENTIFIER + savingsAccountTransactionData.getId().toString(),
                                         savingsAccountTransactionData.getId(), null, false, null, false,
                                         savingsAccountTransactionData.getTransactionDate(), JournalEntryType.CREDIT.getValue().longValue(),
                                         savingsAccountTransactionData.getAmount(), null, JournalEntryType.CREDIT.getValue().longValue(),
@@ -141,15 +152,14 @@ public class SavingsSchedularInterestPoster {
                                         null, savingsAccountTransactionData.getTransactionDate(), null, userId, userId,
                                         DateUtils.getBusinessLocalDate() });
 
-                        paramsForGLInsertion
-                                .add(new Object[] { savingsAccountTransactionData.getAccountDebit(), savingsAccountData.getOfficeId(), null,
-                                        currencyCode, SAVINGS_TRANSACTION_IDENTIFIER + savingsAccountTransactionData.getId().toString(),
-                                        savingsAccountTransactionData.getId(), null, false, null, false,
-                                        savingsAccountTransactionData.getTransactionDate(), JournalEntryType.DEBIT.getValue().longValue(),
-                                        savingsAccountTransactionData.getAmount(), null, JournalEntryType.DEBIT.getValue().longValue(),
-                                        savingsAccountData.getId(), auditDatetime, auditDatetime, false, BigDecimal.ZERO, BigDecimal.ZERO,
-                                        null, savingsAccountTransactionData.getTransactionDate(), null, userId, userId,
-                                        DateUtils.getBusinessLocalDate() });
+                        paramsForGLInsertion.add(new Object[] { debitAccountId, savingsAccountData.getOfficeId(), null, currencyCode,
+                                SAVINGS_TRANSACTION_IDENTIFIER + savingsAccountTransactionData.getId().toString(),
+                                savingsAccountTransactionData.getId(), null, false, null, false,
+                                savingsAccountTransactionData.getTransactionDate(), JournalEntryType.DEBIT.getValue().longValue(),
+                                savingsAccountTransactionData.getAmount(), null, JournalEntryType.DEBIT.getValue().longValue(),
+                                savingsAccountData.getId(), auditDatetime, auditDatetime, false, BigDecimal.ZERO, BigDecimal.ZERO, null,
+                                savingsAccountTransactionData.getTransactionDate(), null, userId, userId,
+                                DateUtils.getBusinessLocalDate() });
                     }
 
                 }
@@ -273,6 +283,10 @@ public class SavingsSchedularInterestPoster {
             }
             batchUpdateJournalEntries(successfulAccounts, savingsAccountTransactionMap);
         }
+    }
+
+    private static boolean isValidGlAccountId(final Long accountId) {
+        return accountId != null && accountId != 0L;
     }
 
     private String batchQueryForTransactionInsertion() {
