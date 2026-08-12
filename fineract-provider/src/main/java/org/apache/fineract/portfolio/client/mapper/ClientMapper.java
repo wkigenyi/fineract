@@ -27,12 +27,17 @@ import org.apache.fineract.portfolio.client.data.ClientTimelineData;
 import org.apache.fineract.portfolio.client.domain.Client;
 import org.apache.fineract.portfolio.client.domain.ClientEnumerations;
 import org.apache.fineract.useradministration.domain.AppUser;
+import org.apache.fineract.useradministration.domain.AppUserRepository;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(config = MapstructMapperConfig.class)
-public interface ClientMapper {
+public abstract class ClientMapper {
+
+    @Autowired
+    protected AppUserRepository appUserRepository;
 
     @Mapping(target = "accountNo", source = "accountNumber")
     @Mapping(target = "status", source = "source", qualifiedByName = "clientStatusEnum")
@@ -80,10 +85,10 @@ public interface ClientMapper {
     @Mapping(target = "legalFormId", ignore = true)
     @Mapping(target = "clientCollateralManagements", ignore = true)
     @Mapping(target = "groups", ignore = true)
-    ClientData map(Client source);
+    public abstract ClientData map(Client source);
 
     @Named("clientTypeCode")
-    default CodeValueData clientTypeCode(Client client) {
+    protected CodeValueData clientTypeCode(Client client) {
         final CodeValue code = client.getClientType();
         if (code == null) {
             return null;
@@ -92,7 +97,7 @@ public interface ClientMapper {
     }
 
     @Named("clientClassificationCode")
-    default CodeValueData clientClassificationCode(Client client) {
+    protected CodeValueData clientClassificationCode(Client client) {
         final CodeValue code = client.getClientClassification();
         if (code == null) {
             return null;
@@ -101,7 +106,7 @@ public interface ClientMapper {
     }
 
     @Named("clientSubStatusCode")
-    default CodeValueData clientSubStatusCode(Client client) {
+    protected CodeValueData clientSubStatusCode(Client client) {
         final CodeValue code = client.getSubStatus();
         if (code == null) {
             return null;
@@ -110,7 +115,7 @@ public interface ClientMapper {
     }
 
     @Named("clientGenderCode")
-    default CodeValueData clientGenderCode(Client client) {
+    protected CodeValueData clientGenderCode(Client client) {
         final CodeValue code = client.getGender();
         if (code == null) {
             return null;
@@ -119,41 +124,29 @@ public interface ClientMapper {
     }
 
     @Named("clientLegalFormEnum")
-    default EnumOptionData clientLegalFormEnum(Client client) {
+    protected EnumOptionData clientLegalFormEnum(Client client) {
         return ClientEnumerations.legalForm(client.getLegalForm());
     }
 
     @Named("clientStatusEnum")
-    default EnumOptionData clientStatusEnum(Client client) {
+    protected EnumOptionData clientStatusEnum(Client client) {
         return ClientEnumerations.status(client.getStatus());
     }
 
     @Named("clientTimelineData")
-    default ClientTimelineData clientTimelineData(Client client) {
-        if (client.isClosed()) {
-            final AppUser activatedBy = client.getActivatedBy();
-            if (activatedBy != null) {
-                return new ClientTimelineData(client.getSubmittedOnDate(), null, null, null, client.getActivationDate(),
-                        activatedBy.getUsername(), activatedBy.getFirstname(), activatedBy.getLastname(), client.getClosureDate(),
-                        client.getClosedBy().getUsername(), client.getClosedBy().getFirstname(), client.getClosedBy().getLastname());
-            } else {
-                return new ClientTimelineData(client.getSubmittedOnDate(), null, null, null, client.getActivationDate(), null, null, null,
-                        client.getClosureDate(), client.getClosedBy().getUsername(), client.getClosedBy().getFirstname(),
-                        client.getClosedBy().getLastname());
-
-            }
-        } else if (client.isActive()) {
-            return new ClientTimelineData(client.getSubmittedOnDate(), null, null, null, client.getActivationDate(),
-                    client.getActivatedBy().getUsername(), client.getActivatedBy().getFirstname(), client.getActivatedBy().getLastname(),
-                    null, null, null, null);
-        } else {
-            return new ClientTimelineData(client.getSubmittedOnDate(), null, null, null, null, null, null, null, null, null, null, null);
-        }
+    protected ClientTimelineData clientTimelineData(Client client) {
+        return ClientTimelineDataFactory.from(client, resolveSubmittedBy(client));
     }
 
     @Named("clientIsStaff")
-    default Boolean clientIsStaff(Client client) {
+    protected Boolean clientIsStaff(Client client) {
         return Boolean.valueOf(client.isStaff());
     }
 
+    private AppUser resolveSubmittedBy(final Client client) {
+        if (appUserRepository == null || client == null) {
+            return null;
+        }
+        return client.getCreatedBy().flatMap(appUserRepository::findById).orElse(null);
+    }
 }

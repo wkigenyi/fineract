@@ -158,7 +158,8 @@ public class SavingsAccountChargeAssembler {
             }
             final boolean status = true;
             final SavingsAccountCharge savingsAccountCharge = SavingsAccountCharge.createNewWithoutSavingsAccount(charge,
-                    charge.getAmount(), chargeTime, chargeCalculation, null, status, charge.getFeeOnMonthDay(), charge.feeInterval());
+                    charge.getAmount(), chargeTime, chargeCalculation, null, status, charge.getFeeOnMonthDay(), charge.feeInterval(),
+                    savingsProduct.currency());
             savingsAccountCharges.add(savingsAccountCharge);
         }
         return savingsAccountCharges;

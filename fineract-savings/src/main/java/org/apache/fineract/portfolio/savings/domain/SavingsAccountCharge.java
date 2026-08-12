@@ -157,8 +157,15 @@ public class SavingsAccountCharge extends AbstractAuditableWithUTCDateTimeCustom
     public static SavingsAccountCharge createNewWithoutSavingsAccount(final Charge chargeDefinition, final BigDecimal amountPayable,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
             final MonthDay feeOnMonthDay, final Integer feeInterval) {
+        return createNewWithoutSavingsAccount(chargeDefinition, amountPayable, chargeTime, chargeCalculation, dueDate, status,
+                feeOnMonthDay, feeInterval, null);
+    }
+
+    public static SavingsAccountCharge createNewWithoutSavingsAccount(final Charge chargeDefinition, final BigDecimal amountPayable,
+            final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
+            final MonthDay feeOnMonthDay, final Integer feeInterval, final MonetaryCurrency roundingCurrency) {
         return new SavingsAccountCharge(null, chargeDefinition, amountPayable, chargeTime, chargeCalculation, dueDate, status,
-                feeOnMonthDay, feeInterval);
+                feeOnMonthDay, feeInterval, roundingCurrency);
     }
 
     protected SavingsAccountCharge() {
@@ -168,6 +175,12 @@ public class SavingsAccountCharge extends AbstractAuditableWithUTCDateTimeCustom
     private SavingsAccountCharge(final SavingsAccount savingsAccount, final Charge chargeDefinition, final BigDecimal amount,
             final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
             MonthDay feeOnMonthDay, final Integer feeInterval) {
+        this(savingsAccount, chargeDefinition, amount, chargeTime, chargeCalculation, dueDate, status, feeOnMonthDay, feeInterval, null);
+    }
+
+    private SavingsAccountCharge(final SavingsAccount savingsAccount, final Charge chargeDefinition, final BigDecimal amount,
+            final ChargeTimeType chargeTime, final ChargeCalculationType chargeCalculation, final LocalDate dueDate, final boolean status,
+            MonthDay feeOnMonthDay, final Integer feeInterval, final MonetaryCurrency roundingCurrency) {
 
         this.savingsAccount = savingsAccount;
         this.charge = chargeDefinition;
@@ -228,7 +241,7 @@ public class SavingsAccountCharge extends AbstractAuditableWithUTCDateTimeCustom
 
         final BigDecimal transactionAmount = new BigDecimal(0);
 
-        populateDerivedFields(transactionAmount, chargeAmount);
+        populateDerivedFields(transactionAmount, chargeAmount, roundingCurrency);
 
         if (this.isWithdrawalFee() || this.isSavingsNoActivity()) {
             this.amountOutstanding = BigDecimal.ZERO;
@@ -250,7 +263,8 @@ public class SavingsAccountCharge extends AbstractAuditableWithUTCDateTimeCustom
         }
     }
 
-    private void populateDerivedFields(final BigDecimal transactionAmount, final BigDecimal chargeAmount) {
+    private void populateDerivedFields(final BigDecimal transactionAmount, final BigDecimal chargeAmount,
+            final MonetaryCurrency roundingCurrency) {
 
         switch (ChargeCalculationType.fromInt(this.chargeCalculation)) {
             case INVALID:
@@ -263,12 +277,15 @@ public class SavingsAccountCharge extends AbstractAuditableWithUTCDateTimeCustom
                 this.amountWrittenOff = null;
             break;
             case FLAT:
-                Money money = Money.of(this.savingsAccount().getCurrency(), chargeAmount);
+                // createNewWithoutSavingsAccount is used before the account exists (e.g. client
+                // activation auto-open). Fall back to product currency so rounding still applies.
+                final MonetaryCurrency currency = this.savingsAccount != null ? this.savingsAccount.getCurrency() : roundingCurrency;
+                final BigDecimal roundedAmount = currency != null ? Money.of(currency, chargeAmount).getAmount() : chargeAmount;
                 this.percentage = null;
-                this.amount = money.getAmount();
+                this.amount = roundedAmount;
                 this.amountPercentageAppliedTo = null;
                 this.amountPaid = null;
-                this.amountOutstanding = money.getAmount();
+                this.amountOutstanding = roundedAmount;
                 this.amountWaived = null;
                 this.amountWrittenOff = null;
             break;
